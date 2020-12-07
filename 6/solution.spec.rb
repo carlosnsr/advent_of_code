@@ -11,6 +11,14 @@ describe CustomsCounter do
     it 'starts with empty group tally' do
       expect(counter.group_tally).to be_empty
     end
+
+    it 'starts with zero common count' do
+      expect(counter.common_count).to eq(0)
+    end
+
+    it 'starts with zero group count' do
+      expect(counter.group_count).to eq(0)
+    end
   end
 
   describe 'load' do
@@ -61,12 +69,6 @@ describe CustomsCounter do
         expect(counter).not_to receive(:add_to_group)
         counter.load(line)
       end
-
-      it 'increments count by the value of tally_group' do
-        expect(counter.count).to eq(0)
-        counter.load(line)
-        expect(counter.count).to eq(count)
-      end
     end
   end
 
@@ -75,6 +77,11 @@ describe CustomsCounter do
 
     it 'returns the number of unique characters' do
       expect(counter.add_to_group(line)).to eq(3)
+    end
+
+    it 'increments the group count' do
+      expect { counter.add_to_group(line) }
+        .to change { counter.group_count }.from(0).to(1)
     end
 
     context 'called with two lines' do
@@ -91,14 +98,20 @@ describe CustomsCounter do
     context 'if a line has already been loaded' do
       let(:line) { 'abc' }
 
-      before(:each) { counter.load(line) }
+      before(:each) do
+        counter.load(line)
+        counter.tally_group
+      end
 
-      it 'returns the current group tally' do
-        expect(counter.tally_group).to eq(3)
+      it 'adds the number of unique answers to the count' do
+        expect(counter.count).to eq(3)
+      end
+
+      it 'adds the number of common answers to the count' do
+        expect(counter.common_count).to eq(3)
       end
 
       it 'resets the group_tally' do
-        counter.tally_group
         expect(counter.group_tally.size).to eq(0)
       end
     end
@@ -106,7 +119,7 @@ describe CustomsCounter do
 
   describe '#final_count' do
     it 'returns the final count' do
-      expect(counter.final_count).to eq(0)
+      expect(counter.final_count).to eq({ count: 0, common_count: 0 })
     end
 
     context 'if a group was counted but not added to the total yet' do
@@ -124,7 +137,7 @@ describe CustomsCounter do
       end
 
       it 'returns the final count (includes the last group)' do
-        expect(counter.final_count).to eq(3)
+        expect(counter.final_count).to eq({ count: 3, common_count: 3 })
       end
     end
   end
@@ -135,15 +148,16 @@ describe 'count_customs' do
 
   context 'if passed a group result' do
     it 'returns the unique answers of the group' do
-      expect(count_customs(group_input)).to eq(5)
+      expect(count_customs(group_input))
+        .to eq({ count: 5, common_count: 2 })
     end
   end
 
   context 'if passed multiple groups' do
-    let(:input) { [].concat(group_input, group_input) }
+    let(:input) { [].concat(group_input, [""], group_input) }
 
     it "returns the sum of each group's unique answers" do
-      expect(count_customs(group_input)).to eq(5)
+      expect(count_customs(input)).to eq({ count: 10, common_count: 4 })
     end
   end
 end
