@@ -1,6 +1,11 @@
 # Day 7: Handy Haversacks
 
-## Part 1
+Install [Ruby](https://www.ruby-lang.org/en/)
+To install RSpec `gem install rspec`
+To run: `ruby main.rb puzzle_input`
+To test: `rspec solution.spec.rb`
+
+## Part One
 
 You land at the regional airport in time for your next flight. In fact, it looks like you'll even have time to grab some food: all flights are currently delayed due to issues in luggage processing.
 

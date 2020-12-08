@@ -1,5 +1,3 @@
-require 'set'
-
 class CustomsCounter
   attr_reader :common_count, :count, :group_count, :group_tally
 
@@ -53,5 +51,3 @@ def count_customs(input)
   input.each { |line| counter.load(line) }
   counter.final_count
 end
-
-puts count_customs(ARGF)

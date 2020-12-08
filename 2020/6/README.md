@@ -1,6 +1,11 @@
 # Day 6: Custom Customs
 
-## PART 1
+Install [Ruby](https://www.ruby-lang.org/en/)
+To install RSpec `gem install rspec`
+To run: `ruby main.rb puzzle_input`
+To test: `rspec solution.spec.rb`
+
+## Part One
 
 As your flight approaches the regional airport where you'll switch to a much larger plane, customs declaration forms are distributed to the passengers.
 
