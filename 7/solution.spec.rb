@@ -25,14 +25,14 @@ RSpec.describe BagRules do
   describe '#load' do
     it 'calls #extract_rule for each line of input' do
       expect(rules).to receive(:extract_rule)
-        .and_return({ bag: 'bag', subbags: [] })
+        .and_return({ bag: 'bag', subbags: {} })
         .exactly(input.size).times
       rules.load(input)
     end
 
     it 'calls #update_ruleset for each line of input' do
       expect(rules).to receive(:update_ruleset)
-        .and_return({ bag: 'bag', subbags: [] })
+        .and_return({ bag: 'bag', subbags: {} })
         .exactly(input.size).times
       rules.load(input)
     end
@@ -60,7 +60,7 @@ RSpec.describe BagRules do
     context 'if given another rule with one sub-bag' do
       let(:rule) { input[1] }
       let(:bag) { 'dotted plum' }
-      let(:subbags) { [{ colour: 'wavy cyan', number: 3 }] }
+      let(:subbags) { { 'wavy cyan' => 3 } }
 
       it 'extracts the container bag' do
         expect(rules.extract_rule(rule)[:bag]).to eq(bag)
@@ -75,11 +75,11 @@ RSpec.describe BagRules do
       let(:rule) { input[0] }
       let(:bag) { 'vibrant salmon' }
       let(:subbags) do
-        [
-          { colour: 'vibrant gold', number: 1 },
-          { colour: 'wavy aqua', number: 2 },
-          { colour: 'dotted crimson', number: 1 },
-        ]
+        {
+          'vibrant gold' => 1,
+          'wavy aqua' => 2,
+          'dotted crimson' => 1,
+        }
       end
 
       it 'extracts the container bag' do
@@ -101,7 +101,7 @@ RSpec.describe BagRules do
 
     context 'if given another rule with no sub-bags' do
       let(:bag) { 'dark tomato' }
-      let(:subbags) { [] }
+      let(:subbags) { {} }
 
       it 'adds the rule to the ruleset' do
         expect(rules.ruleset[bag]).to eq(subbags)
@@ -114,25 +114,25 @@ RSpec.describe BagRules do
 
     context 'if given another rule with one sub-bag' do
       let(:bag) { 'dotted plum' }
-      let(:subbags) { [{ colour: 'wavy cyan', number: 3 }] }
+      let(:subbags) { { 'wavy cyan' => 3 } }
 
       it 'adds the rule to the ruleset' do
         expect(rules.ruleset[bag]).to eq(subbags)
       end
 
       it 'adds the subbag to the lookup' do
-        expect(rules.lookup[subbags[0][:colour]]).to eq([bag])
+        expect(rules.lookup['wavy cyan']).to eq([bag])
       end
     end
 
     context 'if given a rule with multiple sub-bags' do
       let(:bag) { 'vibrant salmon' }
       let(:subbags) do
-        [
-          { colour: 'vibrant gold', number: 1 },
-          { colour: 'wavy aqua', number: 2 },
-          { colour: 'dotted crimson', number: 1 },
-        ]
+        {
+          'vibrant gold' => 1,
+          'wavy aqua' => 2,
+          'dotted crimson' => 1,
+        }
       end
 
       it 'adds the rule to the ruleset' do
@@ -140,19 +140,19 @@ RSpec.describe BagRules do
       end
 
       it 'adds each subbag to the lookup' do
-        subbags.each do |subbag|
-          expect(rules.lookup[subbag[:colour]]).to eq([bag])
+        subbags.keys.each do |subbag_colour|
+          expect(rules.lookup[subbag_colour]).to eq([bag])
         end
       end
 
       context 'if the same subbag is in another rule' do
         let(:bag2) { 'murdered violet' }
-        let(:subbags2) { [{ colour: 'wavy aqua', number: 2 }] }
+        let(:subbags2) { { 'wavy aqua' => 2 } }
 
         before(:each) { rules.update_ruleset(make_rule(bag2, subbags2)) }
 
         it 'updates the lookup to include that rule' do
-          expect(rules.lookup[subbags2[0][:colour]]).to eq([bag, bag2])
+          expect(rules.lookup['wavy aqua']).to eq([bag, bag2])
         end
       end
     end
@@ -170,11 +170,27 @@ RSpec.describe BagRules do
     context 'ruleset is populated' do
       before(:each) { rules.load(input) }
 
+      context 'if colour cannot contain others' do
+        let(:colour) { 'dark tomato' }
+
+        it 'returns the directly as true' do
+          expect(rules.can_contain(colour)[:directly]).to be_truthy
+        end
+
+        it 'has no bags inside it' do
+          expect(rules.can_contain(colour)[:has_inside]).to eq(0)
+        end
+      end
+
       context 'if colour can contain others' do
         let(:colour) { 'vibrant salmon' }
 
         it 'returns the directly as true' do
           expect(rules.can_contain(colour)[:directly]).to be_truthy
+        end
+
+        it 'has the sum of the bags inside it' do
+          expect(rules.can_contain(colour)[:has_inside]).to eq(4)
         end
       end
 
@@ -186,7 +202,11 @@ RSpec.describe BagRules do
         end
 
         it 'returns the colours it can be contained in' do
-          expect(rules.can_contain(colour)[:inside]).to eq(['muted salmon'])
+          expect(rules.can_contain(colour)[:goes_inside]).to eq(['muted salmon'])
+        end
+
+        it 'has no bags inside it' do
+          expect(rules.can_contain(colour)[:has_inside]).to eq(0)
         end
       end
 
@@ -198,7 +218,15 @@ RSpec.describe BagRules do
         end
 
         it 'returns the colours it can be contained in' do
-          expect(rules.can_contain(colour)[:inside]).to eq(['vibrant salmon', 'murdered violet'])
+          expect(rules.can_contain(colour)[:goes_inside]).to eq(['vibrant salmon', 'murdered violet'])
+        end
+      end
+
+      context 'if the bag has bags inside it, that have bags inside them' do
+        let(:colour) { 'murdered violet' }
+
+        it 'has the sum of the bags inside it and their sums too' do
+          expect(rules.can_contain(colour)[:has_inside]).to eq(5)
         end
       end
     end

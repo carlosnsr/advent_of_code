@@ -20,11 +20,10 @@ class BagRules
     match = BAG_REGEX.match(line)
     subbags = match[:subbags]
       .split(',')
-      .map do |line|
+      .inject({}) do |acc, line|
         submatch = SUBBAG_REGEX.match(line.strip)
-        unless submatch.nil?
-          { colour: submatch[:colour], number: submatch[:number].to_i }
-        end
+        acc[submatch[:colour]] = submatch[:number].to_i unless submatch.nil?
+        acc
       end.compact
 
     {
@@ -35,20 +34,32 @@ class BagRules
 
   def update_ruleset(rule)
     @ruleset[rule[:bag]] = rule[:subbags]
-    rule[:subbags].each { |subbag| @lookup[subbag[:colour]] << rule[:bag] }
+    rule[:subbags].keys.each { |colour| @lookup[colour] << rule[:bag] }
   end
 
   def can_contain(colour)
     {
       directly: ruleset.keys.include?(colour),
-      inside: recursively_lookup(colour).uniq
+      goes_inside: recursively_lookup(colour).uniq,
+      has_inside: recursively_total_contents(colour) - 1, # exclude this bag
     }
   end
 
   private
 
   def recursively_lookup(colour)
-    lookup[colour].collect { |container| [container].concat(recursively_lookup(container)).flatten }.flatten
+    lookup[colour]
+      .collect { |container| [container].concat(recursively_lookup(container)).flatten }
+      .flatten
+  end
+
+  def recursively_total_contents(colour)
+    # count itself
+    count = 1
+    # recursively count each bag in it
+    current = ruleset[colour]
+    current.each { |subbag, number| count += number * recursively_total_contents(subbag) } unless current.nil?
+    count
   end
 end
 
@@ -56,7 +67,8 @@ def main
   rules = BagRules.new
   rules.load(ARGF)
   result = rules.can_contain('shiny gold')
-  puts "answer: #{result[:inside].uniq.size}"
+  puts "goes inside: #{result[:goes_inside].size}"
+  puts "has inside: #{result[:has_inside]}"
 end
 
 main
