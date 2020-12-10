@@ -1,9 +1,9 @@
 # Day 7: Handy Haversacks
 
-Install [Ruby](https://www.ruby-lang.org/en/)
-To install RSpec `gem install rspec`
-To run: `ruby main.rb puzzle_input`
-To test: `rspec solution.spec.rb`
+- Install [Ruby](https://www.ruby-lang.org/en/)
+- To install RSpec `gem install rspec`
+- To run: `ruby main.rb puzzle_input`
+- To test: `rspec solution.spec.rb`
 
 ## Part One
 

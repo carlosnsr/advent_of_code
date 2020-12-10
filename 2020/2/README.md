@@ -1,7 +1,9 @@
 # Day 2: Password Philosophy
 
-Install [Ruby](https://www.ruby-lang.org/en/)
-To run: `ruby main.rb puzzle_input`
+- Install [Ruby](https://www.ruby-lang.org/en/)
+- Install RSpec: `gem install rspec`
+- To run: `ruby main.rb puzzle_input`
+- To test: `rspec solution.spec.rb`
 
 ## Part One
 

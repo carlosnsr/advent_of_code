@@ -1,7 +1,7 @@
 # Day 1: Report Repair
 
-Install [Ruby](https://www.ruby-lang.org/en/)
-To run: `ruby main.rb puzzle_input`
+- Install [Ruby](https://www.ruby-lang.org/en/)
+- To run: `ruby main.rb puzzle_input`
 
 ## Part One
 
