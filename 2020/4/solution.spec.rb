@@ -28,6 +28,10 @@ RSpec.describe PassportValidator do
     it 'has 0 valid' do
       expect(validator.valid).to eq(0)
     end
+
+    it 'has 0 actually valid' do
+      expect(validator.actually_valid).to eq(0)
+    end
   end
 
   describe '#count' do
@@ -60,6 +64,10 @@ RSpec.describe PassportValidator do
 
       it 'increments #valid' do
         expect { validator.validate(passport) }.to change { validator.valid }.by(1)
+      end
+
+      it 'increments #actually_valid' do
+        expect { validator.validate(passport) }.to change { validator.actually_valid }.by(1)
       end
 
       it 'increments #count' do
@@ -106,6 +114,10 @@ RSpec.describe PassportValidator do
         expect { validator.validate(passport) }.to change { validator.valid }.by(1)
       end
 
+      it 'increments #actually_valid' do
+        expect { validator.validate(passport) }.to change { validator.actually_valid }.by(1)
+      end
+
       it 'increments #count' do
         expect { validator.validate(passport) }.to change { validator.count }.by(1)
       end
@@ -130,6 +142,64 @@ RSpec.describe PassportValidator do
       it 'increments #count' do
         expect { validator.validate(passport) }.to change { validator.count }.by(1)
       end
+    end
+  end
+
+  describe '#validate_year' do
+    let(:min) { 1920 }
+    let(:max) { 2002 }
+
+    it 'returns false if year is < min' do
+      expect(validator.validate_year('1919', min, max)).to be_falsey
+    end
+
+    it 'returns false if year is > max' do
+      expect(validator.validate_year('2003', min, max)).to be_falsey
+    end
+
+    it 'returns false if year is not a number' do
+      expect(validator.validate_year('hello', min, max)).to be_falsey
+    end
+
+    it 'returns true if year is a number inclusively between min and max' do
+      expect(validator.validate_year('1920', min, max)).to be_truthy
+      expect(validator.validate_year('2002', min, max)).to be_truthy
+      expect(validator.validate_year('1980', min, max)).to be_truthy
+    end
+  end
+
+  describe 'validate_hgt' do
+    it 'returns true if height is in cm or inches' do
+      expect(validator.validate_hgt('150cm')).to be_truthy
+      expect(validator.validate_hgt('59in')).to be_truthy
+    end
+
+    it 'returns false if height is not cm or inches' do
+      expect(validator.validate_hgt('149')).to be_falsey
+    end
+
+    it 'returns true if height is in cm and too small or big' do
+      expect(validator.validate_hgt('149cm')).to be_falsey
+      expect(validator.validate_hgt('194cm')).to be_falsey
+    end
+
+    it 'returns true if height is in inches and too small or big' do
+      expect(validator.validate_hgt('58in')).to be_falsey
+      expect(validator.validate_hgt('77in')).to be_falsey
+    end
+  end
+
+  describe 'validate_hcl' do
+    it 'returns true if passed a # and six digits' do
+      expect(validator.validate_hcl('#000000')).to be_truthy
+      expect(validator.validate_hcl('#000999')).to be_truthy
+      expect(validator.validate_hcl('#123456')).to be_truthy
+    end
+
+    it 'returns false otherwise' do
+      expect(validator.validate_hcl('149')).to be_falsey
+      expect(validator.validate_hcl('999999')).to be_falsey
+      expect(validator.validate_hcl('#12345')).to be_falsey
     end
   end
 end
