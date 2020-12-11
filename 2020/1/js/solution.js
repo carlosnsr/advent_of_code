@@ -2,30 +2,24 @@ const fs = require('fs')
 const _ = require('lodash')
 
 // numbers: sorted array of numbers
-const find_pair = (numbers, target_sum = 2020, start = 0) => {  // O(nlog(n))
+const curried_find = _.curry((fn, numbers, target_sum = 2020, start = 0) => {
   let mid_point = Math.ceil(target_sum / 2)
   let stop  = 1 + _.sortedIndex(numbers, mid_point)
   for(let i = start; i < stop; ++i) {
     const difference = target_sum - numbers[i]
-    const best_match = _.sortedIndex(numbers, difference)
-    if (numbers[best_match] == difference)
-      return [i, best_match]
+    const result = fn(numbers, difference, i + 1)
+    if (result.length != 0)
+      return [i, ...result]
   }
   return []
-}
+})
 
-const find_trio = (numbers, target_sum = 2020) => {
-  let mid_point = Math.ceil(target_sum / 2)
-  let stop  = 1 + _.sortedIndex(numbers, mid_point)
-  for(let i = 0; i < stop; ++i) {
-    const difference = target_sum - numbers[i]
-    const pair = find_pair(numbers, difference, i + 1)
-    if (pair.length != 0) {
-      return [i, ...pair]
-    }
-  }
-  return []
-}
+const find_pair = curried_find((numbers, difference) => {
+  const index = _.sortedIndex(numbers, difference)
+  return (numbers[index] === difference ? [index] : [] )
+})
+
+const find_trio = curried_find(find_pair)
 
 const get_solution = (part, numbers, fn) => {
   console.log(`Part ${part}`)
