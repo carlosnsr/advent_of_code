@@ -16,16 +16,6 @@ RSpec.describe CodeReader do
     ]
   end
 
-  describe '#initialize' do
-    it 'has a zero cursor' do
-      expect(reader.cursor).to eq(0)
-    end
-
-    it 'has a zero accumulator' do
-      expect(reader.acc).to eq(0)
-    end
-  end
-
   describe '#run' do
     it 'calls #run_line for each line' do
       expect(reader).to receive(:run_line).and_call_original.at_most(input.size).times
@@ -128,23 +118,15 @@ RSpec.describe CodeReader do
       let(:op) { make_op('nop', 0) }
 
       it 'increments cursor' do
-        expect { reader.process_op(op) }.to change { reader.cursor }.by(1)
-      end
-
-      it 'does not change acc' do
-        expect { reader.process_op(op) }.not_to change { reader.acc }
+        expect(reader.process_op(op, 0, 0)).to eq([1, 0])
       end
     end
 
     context 'given an acc-op' do
       let(:op) { make_op('acc', 3) }
 
-      it 'increments cursor' do
-        expect { reader.process_op(op) }.to change { reader.cursor }.by(1)
-      end
-
-      it 'increments acc by the passed-in value' do
-        expect { reader.process_op(op) }.to change { reader.acc }.by(3)
+      it 'increments cursor and acc' do
+        expect(reader.process_op(op, 0, 0)).to eq([1, 3])
       end
     end
 
@@ -152,11 +134,7 @@ RSpec.describe CodeReader do
       let(:op) { make_op('jmp', -3) }
 
       it 'increments cursor by the passed-in value' do
-        expect { reader.process_op(op) }.to change { reader.cursor }.by(-3)
-      end
-
-      it 'does not change acc' do
-        expect { reader.process_op(op) }.not_to change { reader.acc }
+        expect(reader.process_op(op, 0, 0)).to eq([-3, 0])
       end
     end
   end
