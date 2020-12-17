@@ -18,21 +18,30 @@ RSpec.describe 'run with provided test input' do
   it 'returns the answer before repeating an already-run instruction' do
     reader = CodeReader.new
     operations = reader.parse(input)
-    expect(reader.run(operations)).to eq(5)
+    expect(reader.run(operations)).to eq({ acc: 5, completed: false })
+  end
+
+  it 'can resolve all instructions by modifying one' do
+    reader = CodeReader.new
+    operations = reader.parse(input)
+    expect(reader.resolve(operations)).to eq({ acc: 8, completed: true })
   end
 end
 
 RSpec.describe CodeReader do
   let(:reader) { CodeReader.new }
+  let(:operations) { reader.parse(input) }
+
+  def make_result(acc, completed = false)
+    { acc: acc, completed: completed }
+  end
 
   describe '#run' do
-    let(:operations) { reader.parse(input) }
-
     context 'if passed no operations' do
       let(:input) { [] }
 
       it 'calculates the correct acc value' do
-        expect(reader.run(operations)).to eq(0)
+        expect(reader.run(operations)).to eq(make_result(0, true))
       end
     end
 
@@ -46,7 +55,7 @@ RSpec.describe CodeReader do
       end
 
       it 'returns 0' do
-        expect(reader.run(operations)).to eq(0)
+        expect(reader.run(operations)).to eq(make_result(0, true))
       end
     end
 
@@ -61,7 +70,7 @@ RSpec.describe CodeReader do
       end
 
       it 'calculates the total accumulated values' do
-        expect(reader.run(operations)).to eq(5)
+        expect(reader.run(operations)).to eq(make_result(5, true))
       end
     end
 
@@ -78,7 +87,51 @@ RSpec.describe CodeReader do
       end
 
       it 'does not add values that were skipped over' do
-        expect(reader.run(operations)).to eq(10)
+        expect(reader.run(operations)).to eq(make_result(10, true))
+      end
+    end
+
+    context 'if passed operations that loop infinitely' do
+      let(:input) do
+        [
+          "acc +1\n",
+          "jmp +0\n",
+          "acc +100\n",
+        ]
+      end
+
+      it 'detects the infinite loop and returns the current accumulated value' do
+        expect(reader.run(operations)).to eq(make_result(1))
+      end
+    end
+  end
+
+  describe '#resolve' do
+    context 'if passed an infinite loop that could be prevented by changing a nop to a jmp' do
+      let(:input) do
+        [
+          "nop +3\n",
+          "acc +1\n",
+          "jmp -3\n",
+          "acc +1\n",
+        ]
+      end
+
+      it 'detects the infinite loop and replaces it with a jmp' do
+        expect(reader.resolve(operations)).to eq(make_result(1, true))
+      end
+    end
+
+    context 'if passed an infinite loop because of a jmp' do
+      let(:input) do
+        [
+          "jmp +0\n",
+          "acc +1\n",
+        ]
+      end
+
+      it 'detects the infinite loop and replaces it with a nop' do
+        expect(reader.resolve(operations)).to eq(make_result(1, true))
       end
     end
   end
