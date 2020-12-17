@@ -20,32 +20,31 @@ class CodeReader
       operation = operations[cursor]
       cursor, acc = process_op(operation, cursor, acc)
     end
-    { acc: acc, completed: cursor == operations.size }
+    { acc: acc, completed: cursor == operations.size, cursor: cursor }
   end
 
   def resolve(operations)
-    cursor = 0
-    acc = 0
-    visited = BitArray.new(operations.size)
-    # run through the operations once
-    while cursor < operations.size
-      break if visited[cursor] == VISITED
-      visited[cursor] = VISITED
-      operation = operations[cursor]
+    # try the initial set of instructions
+    result = run(operations)
+    return result if result[:completed]
+
+    operations.each_index do |i|
       # for each jmp/nop, substitute a nop/jmp and test running this substitution
+      operation = operations[i]
       if operation[:op] == 'jmp' || operation[:op] == 'nop'
         substitute = {
           op: (operation[:op] == 'nop' ? 'jmp' : 'nop'),
           val: operation[:val]
         }
-        sub_cursor, sub_acc = process_op(substitute, cursor, acc)
-        alternate_run = run(operations, sub_cursor, sub_acc, visited.dup)
+        operations[i] = substitute
+        alternate_run = run(operations)
+        operations[i] = operation
+
         return alternate_run if alternate_run[:completed]
       end
-      # continue calculating this branch
-      cursor, acc = process_op(operation, cursor, acc)
     end
-    { acc: acc, completed: cursor == operations.size }
+
+    result
   end
 
   def parse_line(line)

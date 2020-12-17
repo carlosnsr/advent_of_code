@@ -18,13 +18,13 @@ RSpec.describe 'run with provided test input' do
   it 'returns the answer before repeating an already-run instruction' do
     reader = CodeReader.new
     operations = reader.parse(input)
-    expect(reader.run(operations)).to eq({ acc: 5, completed: false })
+    expect(reader.run(operations)).to eq({ acc: 5, completed: false, cursor: 1 })
   end
 
   it 'can resolve all instructions by modifying one' do
     reader = CodeReader.new
     operations = reader.parse(input)
-    expect(reader.resolve(operations)).to eq({ acc: 8, completed: true })
+    expect(reader.resolve(operations)).to eq({ acc: 8, completed: true, cursor: input.size })
   end
 end
 
@@ -32,8 +32,8 @@ RSpec.describe CodeReader do
   let(:reader) { CodeReader.new }
   let(:operations) { reader.parse(input) }
 
-  def make_result(acc, completed = false)
-    { acc: acc, completed: completed }
+  def make_result(acc, completed, cursor)
+    { acc: acc, completed: completed, cursor: cursor }
   end
 
   describe '#run' do
@@ -41,7 +41,7 @@ RSpec.describe CodeReader do
       let(:input) { [] }
 
       it 'calculates the correct acc value' do
-        expect(reader.run(operations)).to eq(make_result(0, true))
+        expect(reader.run(operations)).to eq(make_result(0, true, 0))
       end
     end
 
@@ -55,7 +55,7 @@ RSpec.describe CodeReader do
       end
 
       it 'returns 0' do
-        expect(reader.run(operations)).to eq(make_result(0, true))
+        expect(reader.run(operations)).to eq(make_result(0, true, 3))
       end
     end
 
@@ -70,7 +70,7 @@ RSpec.describe CodeReader do
       end
 
       it 'calculates the total accumulated values' do
-        expect(reader.run(operations)).to eq(make_result(5, true))
+        expect(reader.run(operations)).to eq(make_result(5, true, 4))
       end
     end
 
@@ -87,7 +87,7 @@ RSpec.describe CodeReader do
       end
 
       it 'does not add values that were skipped over' do
-        expect(reader.run(operations)).to eq(make_result(10, true))
+        expect(reader.run(operations)).to eq(make_result(10, true, 6))
       end
     end
 
@@ -101,7 +101,7 @@ RSpec.describe CodeReader do
       end
 
       it 'detects the infinite loop and returns the current accumulated value' do
-        expect(reader.run(operations)).to eq(make_result(1))
+        expect(reader.run(operations)).to eq(make_result(1, false, 1))
       end
     end
   end
@@ -118,7 +118,7 @@ RSpec.describe CodeReader do
       end
 
       it 'detects the infinite loop and replaces it with a jmp' do
-        expect(reader.resolve(operations)).to eq(make_result(1, true))
+        expect(reader.resolve(operations)).to eq(make_result(1, true, 4))
       end
     end
 
@@ -131,7 +131,7 @@ RSpec.describe CodeReader do
       end
 
       it 'detects the infinite loop and replaces it with a nop' do
-        expect(reader.resolve(operations)).to eq(make_result(1, true))
+        expect(reader.resolve(operations)).to eq(make_result(1, true, 2))
       end
     end
   end
