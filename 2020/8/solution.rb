@@ -1,20 +1,24 @@
+require 'bitarray'
+
 OP_REGEX = Regexp.new(/^(?<op>(acc|jmp|nop)) (?<val>[+-]\d+)\n/)
+VISITED = 1
 
 class CodeReader
-  def run(input)
+  def parse(input)
     operations = []
     input.each do |line|
       operations << parse_line(line)
     end
+    operations
+  end
 
-    cursor = 0
-    acc = 0
+  def run(operations, cursor = 0, acc = 0)
+    visited = BitArray.new(operations.size)
     while cursor < operations.size
+      return acc if visited[cursor] == VISITED
+      visited[cursor] = VISITED
       operation = operations[cursor]
-      # puts operation
-      return acc if operation[:visited]
       cursor, acc = process_op(operation, cursor, acc)
-      operation[:visited] = true
     end
     acc
   end
@@ -22,7 +26,7 @@ class CodeReader
   def parse_line(line)
     match = OP_REGEX.match(line)
     raise "No match on *#{line}*" if match.nil?
-    { op: match[:op], val: match[:val].to_i, visited: false }
+    { op: match[:op], val: match[:val].to_i }
   end
 
   def process_op(op, cursor, acc)

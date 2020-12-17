@@ -1,7 +1,7 @@
 # Day 8: Handheld Halting
 
 - Install [Ruby](https://www.ruby-lang.org/en/)
-- To install RSpec `gem install rspec`
+- Install needed libraries: `gem install bundler && bundle`
 - To run: `ruby main.rb puzzle_input`
 - To test: `rspec solution.spec.rb`
 

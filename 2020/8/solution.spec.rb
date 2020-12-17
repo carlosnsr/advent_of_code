@@ -1,7 +1,6 @@
 require './solution.rb'
 
-RSpec.describe CodeReader do
-  let(:reader) { CodeReader.new }
+RSpec.describe 'run with provided test input' do
   let(:input) do
     [
       "nop +0\n",
@@ -16,17 +15,24 @@ RSpec.describe CodeReader do
     ]
   end
 
-  describe '#run' do
-    it 'calls #run_line for each line' do
-      expect(reader).to receive(:run_line).and_call_original.at_most(input.size).times
-      reader.run(input)
-    end
+  it 'returns the answer before repeating an already-run instruction' do
+    reader = CodeReader.new
+    operations = reader.parse(input)
+    expect(reader.run(operations)).to eq(5)
+  end
+end
 
-    context 'if passed no input' do
+RSpec.describe CodeReader do
+  let(:reader) { CodeReader.new }
+
+  describe '#run' do
+    let(:operations) { reader.parse(input) }
+
+    context 'if passed no operations' do
       let(:input) { [] }
 
       it 'calculates the correct acc value' do
-        expect(reader.run(input)).to eq(0)
+        expect(reader.run(operations)).to eq(0)
       end
     end
 
@@ -39,12 +45,12 @@ RSpec.describe CodeReader do
         ]
       end
 
-      it 'calculates the correct acc value' do
-        expect(reader.run(input)).to eq(0)
+      it 'returns 0' do
+        expect(reader.run(operations)).to eq(0)
       end
     end
 
-    context 'if passed input that has no jumps' do
+    context 'if passed operations that has no jumps' do
       let(:input) do
         [
           "acc +1\n",
@@ -54,12 +60,12 @@ RSpec.describe CodeReader do
         ]
       end
 
-      it 'calculates the correct acc value' do
-        expect(reader.run(input)).to eq(5)
+      it 'calculates the total accumulated values' do
+        expect(reader.run(operations)).to eq(5)
       end
     end
 
-    context 'if passed input that jumps forward' do
+    context 'if passed operations that jumps forward' do
       let(:input) do
         [
           "acc +1\n",
@@ -71,20 +77,14 @@ RSpec.describe CodeReader do
         ]
       end
 
-      it 'calculates the correct acc value skipping values that were jumped over' do
-        expect(reader.run(input)).to eq(10)
-      end
-    end
-
-    context 'if passed input that jumps backward to an already-run instructions' do
-      it 'stops processing and returns the value of acc at that point' do
-        expect(reader.run(input)).to eq(5)
+      it 'does not add values that were skipped over' do
+        expect(reader.run(operations)).to eq(10)
       end
     end
   end
 
   def make_op(op, val, visited = false)
-    { op: op, val: val, visited: visited }
+    { op: op, val: val }
   end
 
   describe '#parse_line' do
