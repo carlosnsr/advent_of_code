@@ -1,19 +1,27 @@
 require './solution.rb'
 
+TEST_INPUT = [
+  35, 20, 15, 25, 47,
+  40, 62, 55, 65, 95,
+  102, 117, 150, 182, 127,
+  219, 299, 277, 309, 576
+]
+
 RSpec.describe '#break_code' do
   let(:preamble) { 5 }
-  let(:input) do
-    [
-      35, 20, 15, 25, 47,
-      40, 62, 55, 65, 95,
-      102, 117, 150, 182, 127,
-      219, 299, 277, 309, 576
-    ]
-  end
 
   it 'returns 127' do
-    enumerator = load_code(input)
-    expect(break_code(enumerator, preamble)).to eq(127)
+    enumerator = load_code(TEST_INPUT)
+    expect(break_code(enumerator, preamble)).to eq({ number: 127, breakpoint: 14 })
+  end
+end
+
+RSpec.describe '#find_weakness' do
+  let(:code_break) { { number: 127, breakpoint: 14 } }
+
+  it 'returns 127' do
+    enumerator = load_code(TEST_INPUT)
+    expect(find_weakness(enumerator, **code_break)).to eq(62)
   end
 end
 
@@ -48,6 +56,27 @@ RSpec.describe '#has_sum_operands' do
 
     it "returns false if the operands' sum can only be the product of the same number" do
       expect(has_sum_operands(4, operands)).to be_falsey
+    end
+  end
+end
+
+RSpec.describe '#find_contiguous_operands' do
+  let(:operands) { [ 35, 20, 15, 25, 47 ] }
+
+  context 'if given a target number that is the sum of contiguous operands' do
+    let(:contiguous_operands) { operands.slice(1, 3) }
+    let(:target) { contiguous_operands.inject(&:+) }
+
+    it 'returns the contiguous operands' do
+      expect(find_contiguous_operands(target, operands)).to eq(contiguous_operands)
+    end
+  end
+
+  context 'if given a target number that is NOT the sum of any contiguous operands' do
+    let(:target) { operands.inject(&:+) + 1}
+
+    it 'returns the contiguous operands' do
+      expect(find_contiguous_operands(target, operands)).to eq([])
     end
   end
 end
