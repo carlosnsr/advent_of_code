@@ -54,3 +54,15 @@ RSpec.describe '#differences' do
   it { expect(differences([1, 2, 5])).to eq([1, 1, 3, 3]) }
   it { expect(differences([1, 2, 3, 4])).to eq([1, 1, 1, 1, 3]) }
 end
+
+RSpec.describe '#combinations' do
+  it { expect(combinations([3])).to eq(1) }
+  it { expect(combinations([1, 3])).to eq(1) }
+  it { expect(combinations([2, 3])).to eq(1) }
+  it { expect(combinations([3, 3])).to eq(1) }
+  it { expect(combinations([1, 1, 3])).to eq(2) }
+  it { expect(combinations([1, 2, 3])).to eq(2) }
+  it { expect(combinations([1, 1, 1, 3])).to eq(4) }
+  it { expect(combinations([1, 1, 1, 1, 3])).to eq(7) }
+  it { expect(combinations(differences(load_integers(TEST_INPUT)))).to eq(19208) }
+end
