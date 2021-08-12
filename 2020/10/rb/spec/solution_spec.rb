@@ -18,23 +18,23 @@ RSpec.describe '#find_voltage_differences' do
     end
   end
 
-  it 'returns 0s for empty array' do
-    expect(find_voltage_differences([])).to eq([0, 0])
+  it 'for array, assume 3-difference between the outlet and the final device' do
+    expect(find_voltage_differences([])).to eq([0, 1])
   end
 
-  it 'compares the first value to 0' do
-    expect(find_voltage_differences([1])).to eq([1, 0])
-    expect(find_voltage_differences([2])).to eq([0, 0])
-    expect(find_voltage_differences([3])).to eq([0, 1])
+  it 'compares the first value to 0 (the outlet) and then +3 (the device)' do
+    expect(find_voltage_differences([1])).to eq([1, 1])
+    expect(find_voltage_differences([2])).to eq([0, 1])
+    expect(find_voltage_differences([3])).to eq([0, 2])
   end
 
   it 'can process multi-item arrays' do
-    expect(find_voltage_differences([1, 2, 3])).to eq([3, 0])
-    expect(find_voltage_differences([3, 6, 9])).to eq([0, 3])
+    expect(find_voltage_differences([1, 2, 3])).to eq([3, 1])
+    expect(find_voltage_differences([3, 6, 9])).to eq([0, 4])
   end
 
   it 'can processes unsorted arrays' do
-    expect(find_voltage_differences([3, 1, 2])).to eq([3, 0])
-    expect(find_voltage_differences([3, 9, 6])).to eq([0, 3])
+    expect(find_voltage_differences([3, 1, 2])).to eq([3, 1])
+    expect(find_voltage_differences([3, 9, 6])).to eq([0, 4])
   end
 end

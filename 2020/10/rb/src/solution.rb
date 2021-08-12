@@ -11,5 +11,5 @@ def find_voltage_differences(enumerator)
       acc[index] += 1
       last = voltage
     end
-  [result[1], result[3]]
+  [result[1], result[3] + 1]
 end
