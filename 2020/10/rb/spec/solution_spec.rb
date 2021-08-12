@@ -1,5 +1,14 @@
 require './src/solution.rb'
 
+RSpec.describe '#load_integers' do
+  context 'given an array of integer strings' do
+    let(:input) { %w(10 5 8 6 1 4 9 2 3 7) }
+    it 'returns a sorted array of integers' do
+      expect(load_integers(input)).to eq((1..10).to_a)
+    end
+  end
+end
+
 RSpec.describe '#find_voltage_differences' do
   context 'given the test input' do
     TEST_INPUT = [
@@ -28,13 +37,8 @@ RSpec.describe '#find_voltage_differences' do
     expect(find_voltage_differences([3])).to eq([0, 2])
   end
 
-  it 'can process multi-item arrays' do
+  it 'can process multi-item sorted arrays' do
     expect(find_voltage_differences([1, 2, 3])).to eq([3, 1])
     expect(find_voltage_differences([3, 6, 9])).to eq([0, 4])
-  end
-
-  it 'can processes unsorted arrays' do
-    expect(find_voltage_differences([3, 1, 2])).to eq([3, 1])
-    expect(find_voltage_differences([3, 9, 6])).to eq([0, 4])
   end
 end

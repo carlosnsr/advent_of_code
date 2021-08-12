@@ -1,11 +1,11 @@
 def load_integers(input)
-  input.map { |e| Integer(e) }.lazy
+  input.map { |e| Integer(e) }.sort
 end
 
-def find_voltage_differences(enumerator)
+# assumes that the passed-in voltages is sorted
+def find_voltage_differences(voltages)
   last = 0
-  result = enumerator
-    .sort
+  result = voltages
     .each_with_object(Array.new(4, 0)) do |voltage, acc|
       index = voltage - last
       acc[index] += 1
