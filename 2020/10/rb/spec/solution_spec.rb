@@ -42,3 +42,15 @@ RSpec.describe '#find_voltage_differences' do
     expect(find_voltage_differences([3, 6, 9])).to eq([0, 4])
   end
 end
+
+RSpec.describe '#differences' do
+  it { expect(differences([])).to eq([3]) }
+  it { expect(differences([1])).to eq([1, 3]) }
+  it { expect(differences([1, 2])).to eq([1, 1, 3]) }
+  it { expect(differences([2, 3])).to eq([2, 1, 3]) }
+  it { expect(differences([1, 3])).to eq([1, 2, 3]) }
+  it { expect(differences([1, 2, 3])).to eq([1, 1, 1, 3]) }
+  it { expect(differences([1, 2, 4])).to eq([1, 1, 2, 3]) }
+  it { expect(differences([1, 2, 5])).to eq([1, 1, 3, 3]) }
+  it { expect(differences([1, 2, 3, 4])).to eq([1, 1, 1, 1, 3]) }
+end
