@@ -27,4 +27,14 @@ RSpec.describe '#find_voltage_differences' do
     expect(find_voltage_differences([2])).to eq([0, 0])
     expect(find_voltage_differences([3])).to eq([0, 1])
   end
+
+  it 'can process multi-item arrays' do
+    expect(find_voltage_differences([1, 2, 3])).to eq([3, 0])
+    expect(find_voltage_differences([3, 6, 9])).to eq([0, 3])
+  end
+
+  it 'can processes unsorted arrays' do
+    expect(find_voltage_differences([3, 1, 2])).to eq([3, 0])
+    expect(find_voltage_differences([3, 9, 6])).to eq([0, 3])
+  end
 end
