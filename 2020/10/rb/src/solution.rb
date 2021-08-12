@@ -1,4 +1,4 @@
-def load_code(input)
+def load_integers(input)
   input.map { |e| Integer(e) }.lazy
 end
 

@@ -13,7 +13,7 @@ RSpec.describe '#find_voltage_differences' do
     ]
 
     it 'the number of 1-volt and 3-volt differences' do
-      enumerator = load_code(TEST_INPUT)
+      enumerator = load_integers(TEST_INPUT)
       expect(find_voltage_differences(enumerator)).to eq([22, 10])
     end
   end
