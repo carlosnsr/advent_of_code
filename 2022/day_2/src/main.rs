@@ -10,34 +10,74 @@ enum Outcome {
     Draw,
 }
 
-#[derive(Debug, PartialEq)]
+impl Outcome {
+    fn codex(outcome: &str) -> Outcome {
+        match outcome {
+            "X" => Outcome::Loss,
+            "Y" => Outcome::Draw,
+            "Z" => Outcome::Win,
+            _ => panic!("Unknown value {}", outcome),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 enum Hand {
     Rock,
     Paper,
     Scissors,
 }
 
+impl Hand {
+    fn codex(hand: &str) -> Hand {
+        match hand {
+            "A" => Hand::Rock,
+            "B" => Hand::Paper,
+            "C" => Hand::Scissors,
+            _ => panic!("Unknown value {}", hand),
+        }
+    }
+
+    fn beats(&self) -> Hand {
+        match self {
+            Hand::Rock => Hand::Scissors,
+            Hand::Paper => Hand::Rock,
+            Hand::Scissors => Hand::Paper,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 struct Round {
     opponent: Hand,
-    mine: Hand,
+    outcome: Outcome,
 }
 
 impl Round {
-    fn build(opponent: &str, mine: &str) -> Round {
+    fn build(opponent: &str, outcome: &str) -> Round {
         Round {
-            opponent: codex(opponent),
-            mine: codex(mine),
+            opponent: Hand::codex(opponent),
+            outcome: Outcome::codex(outcome),
+        }
+    }
+
+    fn make_my_hand(&self) -> Hand {
+        match self.outcome {
+            Outcome::Draw => self.opponent.clone(),
+            Outcome::Loss => self.opponent.beats(),
+            Outcome::Win => self.opponent.beats().beats(),
         }
     }
 
     fn score(&self) -> u32 {
-        let hand_score = match self.mine {
+        let mine = self.make_my_hand();
+        let hand_score = match mine {
             Hand::Rock => 1,
             Hand::Paper => 2,
             Hand::Scissors => 3,
         };
-        let outcome_score = match outcome(&self.opponent, &self.mine) {
+
+        let outcome_score = match self.outcome {
             Outcome::Win => 6,
             Outcome::Draw => 3,
             Outcome::Loss => 0,
@@ -47,33 +87,13 @@ impl Round {
     }
 }
 
-fn codex(hand: &str) -> Hand {
-    match hand {
-        "A" | "X" => Hand::Rock,
-        "B" | "Y" => Hand::Paper,
-        "C" | "Z" => Hand::Scissors,
-        _ => panic!("Unknown value {}", hand),
-    }
-}
-
 fn outcome(opponent: &Hand, mine: &Hand) -> Outcome {
     if opponent == mine {
         Outcome::Draw
+    } else if &opponent.beats() == mine {
+        Outcome::Loss
     } else {
-        match opponent {
-            Hand::Rock => match mine {
-                Hand::Scissors => Outcome::Loss,
-                _ => Outcome::Win,
-            }
-            Hand::Paper => match mine {
-                Hand::Rock => Outcome::Loss,
-                _ => Outcome::Win,
-            }
-            Hand::Scissors => match mine {
-                Hand::Paper => Outcome::Loss,
-                _ => Outcome::Win,
-            }
-        }
+        Outcome::Win
     }
 }
 
@@ -96,20 +116,46 @@ mod tests {
     use super::*;
 
     #[test]
-    fn round_converts_chars_to_hands() {
+    fn round_converts_chars_to_hands_and_outcome() {
         let actual = Round::build("A", "X");
-        let expected = Round { opponent: Hand::Rock, mine: Hand::Rock };
+        let expected = Round { opponent: Hand::Rock, outcome: Outcome::Loss };
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn codex_converts_chars_to_hands() {
-        assert_eq!(codex("A"), Hand::Rock);
-        assert_eq!(codex("B"), Hand::Paper);
-        assert_eq!(codex("C"), Hand::Scissors);
-        assert_eq!(codex("X"), Hand::Rock);
-        assert_eq!(codex("Y"), Hand::Paper);
-        assert_eq!(codex("Z"), Hand::Scissors);
+    fn round_calls_correct_hand_for_win() {
+        let round = Round { opponent: Hand::Rock, outcome: Outcome::Win };
+        assert_eq!(round.make_my_hand(), Hand::Paper);
+    }
+
+    #[test]
+    fn round_calls_correct_hand_for_draw() {
+        let round = Round { opponent: Hand::Rock, outcome: Outcome::Draw };
+        assert_eq!(round.make_my_hand(), Hand::Rock);
+    }
+
+    #[test]
+    fn round_calls_correct_hand_for_loss() {
+        let round = Round { opponent: Hand::Rock, outcome: Outcome::Loss };
+        assert_eq!(round.make_my_hand(), Hand::Scissors);
+    }
+
+    #[test]
+    fn hands_codex_converts_chars_to_hands() {
+        assert_eq!(Hand::codex("A"), Hand::Rock);
+        assert_eq!(Hand::codex("B"), Hand::Paper);
+        assert_eq!(Hand::codex("C"), Hand::Scissors);
+    }
+
+    fn hand_knows_which_hand_it_beats() {
+        assert_eq!(Hand::Rock.beats(), Hand::Scissors);
+    }
+
+    #[test]
+    fn outcomes_codex_converts_chars_to_hands() {
+        assert_eq!(Outcome::codex("X"), Outcome::Loss);
+        assert_eq!(Outcome::codex("Y"), Outcome::Draw);
+        assert_eq!(Outcome::codex("Z"), Outcome::Win);
     }
 
     #[test]
