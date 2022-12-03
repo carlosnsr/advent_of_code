@@ -17,16 +17,32 @@ fn find_floor(input: &String) -> isize {
         .fold(0, |acc, x| acc + decode(x))
 }
 
+fn enters_basement(input: &String) -> Option<usize> {
+    let chars: Vec<char> = input.chars().collect();
+    let mut sum = 0;
+    for i in 0..chars.len() {
+        sum += decode(chars[i]);
+        if sum == -1 {
+            return Some(i)
+        }
+    }
+    None
+}
+
 fn main() {
     let file = File::open(FILENAME).unwrap();
     let reader = BufReader::new(file);
 
     let mut sum = 0;
+    let mut basement_when = 0;
     for (_index, line) in reader.lines().enumerate() {
-        sum += find_floor(&line.unwrap());
+        let line = line.unwrap();
+        sum += find_floor(&line);
+        basement_when = enters_basement(&line).unwrap() + 1; // not 0-indexed
     }
 
     println!("The sum is {}", sum);
+    println!("Enters basement {}", basement_when);
 }
 
 #[cfg(test)]
