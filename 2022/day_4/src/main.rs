@@ -17,12 +17,18 @@ impl WorkRange {
             .iter()
             .map(|s| s.parse::<usize>().unwrap())
             .collect::<Vec<usize>>();
+
         WorkRange { range: numbers[0]..=numbers[1] }
     }
 
     fn superset(&self, other: &Self) -> bool {
         self.range.contains(&other.range.start())
             && self.range.contains(&other.range.end())
+    }
+
+    fn overlaps(&self, other: &Self) -> bool {
+        self.range.contains(&other.range.start())
+            || self.range.contains(&other.range.end())
     }
 }
 
@@ -47,6 +53,7 @@ impl Work {
             .iter()
             .map(|s| WorkRange::parse(s))
             .collect::<Vec<WorkRange>>();
+
         let right = ranges.pop().unwrap();
         let left = ranges.pop().unwrap();
         Work { left: left, right: right }
@@ -55,21 +62,30 @@ impl Work {
     fn has_superset(&self) -> bool {
         self.left.superset(&self.right) || self.right.superset(&self.left)
     }
+
+    fn has_overlap(&self) -> bool {
+        self.left.overlaps(&self.right)
+    }
 }
 
 fn main() {
     let file = File::open(FILENAME).unwrap();
     let reader = BufReader::new(file);
 
-    let mut count = 0;
+    let mut supersets = 0;
+    let mut overlaps = 0;
     for (_index, line) in reader.lines().enumerate() {
         let work = Work::parse_line(line.unwrap());
         if work.has_superset() {
-            count += 1;
+            supersets += 1;
+            overlaps += 1;
+        } else if work.has_overlap() {
+            overlaps += 1;
         }
     }
 
-    println!("The count is {}", count);
+    println!("The number of supersets is {}", supersets);
+    println!("The number of overlaps is {}", overlaps);
 }
 
 #[cfg(test)]
@@ -91,6 +107,18 @@ mod work_tests {
         input = Work::build(1..=9, 2..=10);
         assert!(!input.has_superset());
     }
+
+    #[test]
+    fn has_overlap_returns_true_if_either_range_overlaps_the_other() {
+        let mut input = Work::build(33..=62, 62..=78);
+        assert!(input.has_overlap());
+        let mut input = Work::build(62..=78, 33..=62);
+        assert!(input.has_overlap());
+        input = Work::build(1..=10, 11..=15);
+        assert!(!input.has_overlap());
+        input = Work::build(11..=15, 1..=10);
+        assert!(!input.has_overlap());
+    }
 }
 
 #[cfg(test)]
@@ -109,5 +137,18 @@ mod work_range_tests {
         let right = WorkRange { range: 33..=62 };
         assert!(left.superset(&right));
         assert!(!right.superset(&left));
+    }
+
+    #[test]
+    fn overlap_returns_true_if_left_overlaps_right() {
+        let left = WorkRange { range: 5..=7 };
+        let mut right = WorkRange { range: 7..=9 };
+        assert!(left.overlaps(&right));
+        right = WorkRange { range: 8..=9 };
+        assert!(!left.overlaps(&right));
+        right = WorkRange { range: 1..=5 };
+        assert!(left.overlaps(&right));
+        right = WorkRange { range: 1..=4 };
+        assert!(!left.overlaps(&right));
     }
 }
