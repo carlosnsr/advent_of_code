@@ -4,44 +4,56 @@ use std::ops::RangeInclusive;
 
 const FILENAME: &str = "input";
 
-type WorkPair = RangeInclusive<usize>;
-
 #[derive(Debug, PartialEq)]
-struct Work {
-    right: WorkPair,
-    left: WorkPair,
+struct WorkRange {
+    range: RangeInclusive<usize>,
 }
 
-impl Work {
-    fn parse_line(line: String) -> Self {
-        let mut ranges = line
-            .split(",")
-            .collect::<Vec<&str>>()
-            .iter()
-            .map(|s| Self::parse_pair(s))
-            .collect::<Vec<WorkPair>>();
-        let right = ranges.pop().unwrap();
-        let left = ranges.pop().unwrap();
-        Work { left: left, right: right }
-    }
-
-    fn parse_pair(input: &str) -> WorkPair{
+impl WorkRange {
+    fn parse(input: &str) -> WorkRange {
         let numbers = input
             .split("-")
             .collect::<Vec<&str>>()
             .iter()
             .map(|s| s.parse::<usize>().unwrap())
             .collect::<Vec<usize>>();
-        numbers[0]..=numbers[1]
+        WorkRange { range: numbers[0]..=numbers[1] }
+    }
+
+    fn superset(&self, other: &Self) -> bool {
+        self.range.contains(&other.range.start())
+            && self.range.contains(&other.range.end())
+    }
+}
+
+#[derive(Debug, PartialEq)]
+struct Work {
+    right: WorkRange,
+    left: WorkRange,
+}
+
+impl Work {
+    fn build(left: RangeInclusive<usize>, right: RangeInclusive<usize>) -> Work {
+        Work {
+            left: WorkRange { range: left },
+            right: WorkRange { range: right },
+        }
+    }
+
+    fn parse_line(line: String) -> Self {
+        let mut ranges = line
+            .split(",")
+            .collect::<Vec<&str>>()
+            .iter()
+            .map(|s| WorkRange::parse(s))
+            .collect::<Vec<WorkRange>>();
+        let right = ranges.pop().unwrap();
+        let left = ranges.pop().unwrap();
+        Work { left: left, right: right }
     }
 
     fn has_superset(&self) -> bool {
-        Work::superset(&self.left, &self.right)
-            || Work::superset(&self.right, &self.left)
-    }
-
-    fn superset(left: &WorkPair, right: &WorkPair) -> bool {
-        left.contains(&right.start()) && left.contains(&right.end())
+        self.left.superset(&self.right) || self.right.superset(&self.left)
     }
 }
 
@@ -50,7 +62,7 @@ fn main() {
     let reader = BufReader::new(file);
 
     let mut count = 0;
-    for (index, line) in reader.lines().enumerate() {
+    for (_index, line) in reader.lines().enumerate() {
         let work = Work::parse_line(line.unwrap());
         if work.has_superset() {
             count += 1;
@@ -61,36 +73,41 @@ fn main() {
 }
 
 #[cfg(test)]
-mod tests {
+mod work_tests {
     use super::*;
 
     #[test]
-    fn work_parse_gives_back_work_struct() {
-        let expected = Work { left: 33..=62, right: 26..=62 };
+    fn parse_returns_work() {
+        let expected = Work::build(33..=62, 26..=62);
         assert_eq!(Work::parse_line("33-62,26-62".into()), expected);
     }
 
     #[test]
-    fn work_pair_parse_gives_back_work_pair_struct() {
-        let expected: WorkPair = 33..=62;
-        assert_eq!(Work::parse_pair("33-62".into()), expected);
+    fn has_superset_returns_true_if_either_range_contains_the_other() {
+        let mut input = Work::build(33..=62, 26..=62);
+        assert!(input.has_superset());
+        input = Work::build(26..=62, 33..=62);
+        assert!(input.has_superset());
+        input = Work::build(1..=9, 2..=10);
+        assert!(!input.has_superset());
+    }
+}
+
+#[cfg(test)]
+mod work_range_tests {
+    use super::*;
+
+    #[test]
+    fn parse_returns_work_range() {
+        let expected = WorkRange { range: 33..=62 };
+        assert_eq!(WorkRange::parse("33-62".into()), expected);
     }
 
     #[test]
     fn superset_returns_true_if_left_contains_right() {
-        let left = 26..=62;
-        let right = 33..=62;
-        assert!(Work::superset(&left, &right));
-        assert!(!Work::superset(&right, &left));
-    }
-
-    #[test]
-    fn has_superset_returns_true_if_either_range_contains_the_other() {
-        let mut input = Work { left: 33..=62, right: 26..=62 };
-        assert!(input.has_superset());
-        input = Work { right: 33..=62, left: 26..=62 };
-        assert!(input.has_superset());
-        let mut input = Work { left: 1..=9, right: 2..=10 };
-        assert!(!input.has_superset());
+        let left = WorkRange { range: 26..=62 };
+        let right = WorkRange { range: 33..=62 };
+        assert!(left.superset(&right));
+        assert!(!right.superset(&left));
     }
 }
