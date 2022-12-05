@@ -25,10 +25,21 @@ fn parse(crate_lines: &mut Vec<String>) -> Stacks {
     stacks
 }
 
-fn perform_stack_move(line: String, stacks: &mut Stacks) {
-    let instruction = Instruction::parse(line);
+fn perform_stack_move(instruction: Instruction, stacks: &mut Stacks) {
     for _i in 0..instruction.amount {
         let crate_ = stacks[instruction.from].pop().unwrap();
+        stacks[instruction.to].push(crate_);
+    }
+}
+
+fn perform_full_move(instruction: Instruction, stacks: &mut Stacks) {
+    let mut stack: Stack = Vec::with_capacity(instruction.amount);
+    for _i in 0..instruction.amount {
+        let crate_ = stacks[instruction.from].pop().unwrap();
+        stack.push(crate_)
+    }
+    for _i in 0..instruction.amount {
+        let crate_ = stack.pop().unwrap();
         stacks[instruction.to].push(crate_);
     }
 }
@@ -67,7 +78,9 @@ fn main() {
             // println!("{:?}", stacks);
         // read and perform instructions
         } else if index >= 10 {
-            perform_stack_move(line, &mut stacks);
+            let instruction = Instruction::parse(line);
+            // perform_stack_move(instruction, &mut stacks);
+            perform_full_move(instruction, &mut stacks);
         }
     }
 
