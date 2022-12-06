@@ -21,12 +21,33 @@ fn find_marker(line: &String, length: usize) -> Option<(usize, String)> {
     let end = line.len() - length;
     for i in 0..end {
         let slice = &line[i..i+length];
-        let set = &line[i..i+length].chars().collect::<HashSet<char>>();
+        let set = slice.chars().collect::<HashSet<char>>();
         if set.len() == length { return Some((i+length, slice.into())) }
     }
 
     None
 }
+
+// alternative implementation using a VecQueue
+// fn find_marker(line: &String, length: usize) -> Option<(usize, String)> {
+//     let mut queue: VecDeque<char> = VecDeque::with_capacity(length);
+//     let mut set: HashSet<char> = HashSet::with_capacity(length);
+//
+//     for (i, letter) in line.chars().enumerate() {
+//         queue.push_back(letter);
+//
+//         if queue.len() == length {
+//             queue.iter().for_each(|x| { set.insert(*x); });
+//             if set.len() == length {
+//                 return Some((i+1, String::from(&line[i+1-length..i+1])));
+//             }
+//             queue.pop_front().unwrap();
+//             set.clear();
+//         }
+//     }
+//
+//     None
+// }
 
 #[cfg(test)]
 mod tests {
