@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -7,12 +8,21 @@ fn main() {
     let file = File::open(FILENAME).unwrap();
     let reader = BufReader::new(file);
 
-    let mut sum = 0;
-    for (_index, line) in reader.lines().enumerate() {
+    for line in reader.lines() {
         let line = line.unwrap();
+        let (index, marker) = find_marker(&line).unwrap();
+        println!("The marker is {} at {}", marker, index);
+    }
+}
+
+fn find_marker(line: &String) -> Option<(usize, String)> {
+    for i in 0..(line.len()-4) {
+        let slice = &line[i..i+4];
+        let set = &line[i..i+4].chars().collect::<HashSet<char>>();
+        if set.len() == 4 { return Some((i+3+1, slice.into())) }
     }
 
-    println!("The sum is {}", sum);
+    None
 }
 
 #[cfg(test)]
@@ -20,7 +30,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test() {
-        assert_eq!(1, 1);
+    fn find_marker_returns_marker() {
+        let input = "mjqjpqmgbljsphdztnvjfqwrcgsmlb".into();
+        assert_eq!(find_marker(&input), Some((7, "jpqm".into())));
     }
 }
