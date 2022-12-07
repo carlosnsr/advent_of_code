@@ -10,6 +10,7 @@ struct Solver {
     map: HashMap<String, Vec<usize>>,
     path: VecDeque<String>,
     sizes: Vec<usize>,
+    free_up: Option<usize>,
 }
 
 impl Solver {
@@ -19,6 +20,7 @@ impl Solver {
             map: HashMap::new(),
             path: VecDeque::new(),
             sizes: Vec::new(),
+            free_up: None,
         }
     }
 
@@ -74,21 +76,30 @@ impl Solver {
         while self.path.len() > 1 {
             self.pop();
         }
+        self.free_up();
     }
 
     fn free_up(&mut self) -> Option<usize> {
-        let maximum = 70_000_000;
-        let update = 30_000_000;
-        let total: usize = self.map.get("/".into()).unwrap()[0];
-        let needed = update - (maximum - total);
+        match self.free_up {
+            Some(free) => Some(free),
+            None => {
+                const MAXIMUM: usize = 70_000_000;
+                const UPDATE: usize = 30_000_000;
+                let total: usize = self.map.get("/".into()).unwrap()[0];
+                let needed = UPDATE - (MAXIMUM - total);
 
-        self.sizes.sort();
-        for size in self.sizes.iter() {
-            if *size > needed {
-                return Some(*size);
+                self.sizes.sort();
+                for size in self.sizes.iter() {
+                    if *size > needed {
+                        self.free_up = Some(*size);
+                        break;
+                    }
+                }
+                self.sizes.clear();
+
+                self.free_up
             }
         }
-        None
     }
 
     fn sum(&self) -> usize {
