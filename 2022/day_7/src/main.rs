@@ -9,6 +9,7 @@ struct Solver {
     sum: usize,
     map: HashMap<String, Vec<usize>>,
     path: VecDeque<String>,
+    sizes: Vec<usize>,
 }
 
 impl Solver {
@@ -17,6 +18,7 @@ impl Solver {
             sum: 0,
             map: HashMap::new(),
             path: VecDeque::new(),
+            sizes: Vec::new(),
         }
     }
 
@@ -42,9 +44,11 @@ impl Solver {
 
     fn pop(&mut self) {
         let name = self.path.pop_back().unwrap();
-        // println!("{:?} dropping {:?}", index, name);
+        // println!("dropping {:?}", name);
         if let Some(dirs) = self.map.get_mut(&name) {
             let final_size = dirs.pop().unwrap();
+
+            self.sizes.push(final_size);
             if final_size <= 100_000 {
                 self.sum += final_size;
             }
@@ -71,6 +75,25 @@ impl Solver {
             self.pop();
         }
     }
+
+    fn free_up(&mut self) -> Option<usize> {
+        let maximum = 70_000_000;
+        let update = 30_000_000;
+        let total: usize = self.map.get("/".into()).unwrap()[0];
+        let needed = update - (maximum - total);
+
+        self.sizes.sort();
+        for size in self.sizes.iter() {
+            if *size > needed {
+                return Some(*size);
+            }
+        }
+        None
+    }
+
+    fn sum(&self) -> usize {
+        self.sum
+    }
 }
 
 fn main() {
@@ -93,7 +116,9 @@ fn main() {
         // if index > 32 { break; }
     }
     solver.flush();
-    println!("{:?}", solver);
+    // println!("{:?}", solver);
+    println!("total space of all directories < 100_000 in size: {:?}", solver.sum());
+    println!("directory's size to free up: {:?}", solver.free_up().unwrap());
 }
 
 #[derive(Debug, PartialEq)]
