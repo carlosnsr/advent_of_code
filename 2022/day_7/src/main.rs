@@ -15,13 +15,16 @@ struct Solver {
 
 impl Solver {
     fn new() -> Self {
-        Self {
+        let mut object = Self {
             sum: 0,
             map: HashMap::new(),
             path: VecDeque::new(),
             sizes: Vec::new(),
             free_up: None,
-        }
+        };
+        object.insert("/".into());
+
+        object
     }
 
     fn parse(&mut self, line: &String) {
@@ -123,9 +126,7 @@ fn main() {
     let reader = BufReader::new(file);
 
     let mut solver = Solver::new();
-    solver.insert("/".into());
-
-    for (index, line) in reader.lines().enumerate() {
+    for line in reader.lines() {
         solver.parse(&line.unwrap());
     }
     solver.flush();
