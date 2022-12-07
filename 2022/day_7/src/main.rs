@@ -15,12 +15,26 @@ struct Solver {
 
 impl Solver {
     fn new() -> Self {
-        Self {
+        let mut object = Self {
             sum: 0,
             map: HashMap::new(),
             path: VecDeque::new(),
             sizes: Vec::new(),
             free_up: None,
+        };
+        object.insert("/".into());
+
+        object
+    }
+
+    fn parse(&mut self, line: &String) {
+        match Command::parse(&line) {
+            Command::Chdir(name) => { self.cd(name); },
+            Command::List => (),
+            Command::Dir(name) => { self.insert(name); },
+            Command::File(size) => { self.add(size); },
+            Command::Up => { self.pop(); }
+            // _ => println!("{:?}", line),
         }
     }
 
@@ -112,19 +126,8 @@ fn main() {
     let reader = BufReader::new(file);
 
     let mut solver = Solver::new();
-    solver.insert("/".into());
-
-    for (index, line) in reader.lines().enumerate() {
-        let line = line.unwrap();
-        match Command::parse(&line) {
-            Command::Chdir(name) => { solver.cd(name); },
-            Command::List => (),
-            Command::Dir(name) => { solver.insert(name); },
-            Command::File(size) => { solver.add(size); },
-            Command::Up => { solver.pop(); }
-            _ => println!("{:?}", line),
-        }
-        // if index > 32 { break; }
+    for line in reader.lines() {
+        solver.parse(&line.unwrap());
     }
     solver.flush();
     // println!("{:?}", solver);
