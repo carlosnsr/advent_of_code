@@ -24,6 +24,17 @@ impl Solver {
         }
     }
 
+    fn parse(&mut self, line: &String) {
+        match Command::parse(&line) {
+            Command::Chdir(name) => { self.cd(name); },
+            Command::List => (),
+            Command::Dir(name) => { self.insert(name); },
+            Command::File(size) => { self.add(size); },
+            Command::Up => { self.pop(); }
+            // _ => println!("{:?}", line),
+        }
+    }
+
     fn insert(&mut self, name: String) {
         match self.map.get_mut(&name) {
             Some(sizes) => { sizes.push(0); }
@@ -115,16 +126,7 @@ fn main() {
     solver.insert("/".into());
 
     for (index, line) in reader.lines().enumerate() {
-        let line = line.unwrap();
-        match Command::parse(&line) {
-            Command::Chdir(name) => { solver.cd(name); },
-            Command::List => (),
-            Command::Dir(name) => { solver.insert(name); },
-            Command::File(size) => { solver.add(size); },
-            Command::Up => { solver.pop(); }
-            _ => println!("{:?}", line),
-        }
-        // if index > 32 { break; }
+        solver.parse(&line.unwrap());
     }
     solver.flush();
     // println!("{:?}", solver);
