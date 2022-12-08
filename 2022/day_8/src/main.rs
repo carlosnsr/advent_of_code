@@ -8,14 +8,16 @@ fn main() {
     let reader = BufReader::new(file);
 
     let mut grid: HeightsGrid = vec![];
-    // populates grid
     for (_index, line) in reader.lines().enumerate() {
         grid.push(convert_to_heights(&line.unwrap()));
     }
 
-    let vis_grid: VisGrid = determine_visibility(&grid);
+    let vis_grid = determine_visibility(&grid);
     let visible_trees = count_visible_trees(&vis_grid);
     println!("The number of visible trees is {}", visible_trees);
+    let views_grid = determine_scenic_values(&grid);
+    let scenic_value = max_scenic_value(&views_grid);
+    println!("The highest scenic_value is {}", scenic_value);
 }
 
 type Heights = Vec<i32>;
@@ -31,6 +33,7 @@ fn convert_to_heights(line: &String) -> Heights {
         .collect()
 }
 
+// modified peak-finding algorithm.  Performance O(nm) where n = #rows, m = #columns
 fn determine_visibility(grid: &HeightsGrid) -> VisGrid {
     let mut vis_grid = make_visibility_grid(grid);
 
@@ -47,7 +50,7 @@ fn determine_visibility(grid: &HeightsGrid) -> VisGrid {
 fn make_visibility_grid(grid: &HeightsGrid) -> VisGrid {
     let max_x = grid[0].len();
     let max_y = grid.len();
-    let vis_grid: VisGrid = vec![vec![false; max_x]; max_y];
+    let vis_grid = vec![vec![false; max_x]; max_y];
     vis_grid
 }
 
@@ -120,6 +123,90 @@ fn count_visible_trees(vis_grid: &VisGrid) -> usize {
     visible
 }
 
+
+type ScenicValues = Vec<i32>;
+type ViewsGrid = Vec<ScenicValues>;
+
+fn determine_scenic_values(grid: &HeightsGrid) -> ViewsGrid {
+    let max_x = grid[0].len();
+    let max_y = grid.len();
+    let mut views_grid = vec![vec![1; max_x]; max_y];
+
+    for y in 0..max_y {
+        for x in 0..max_x {
+            let is_boundary_tree = x == 0 || y == 0 || x == max_x - 1 || y == max_y - 1;
+            if is_boundary_tree {
+                views_grid[y][x] = 0;
+                continue;
+            }
+
+            let mut mult = 1;
+            let height = grid[y][x];
+            // check left
+            let mut trees = 0;
+            for x1 in (0..x).rev() {
+                let height1 = grid[y][x1];
+                trees += 1;
+                if height1 >= height {
+                    break;
+                }
+            }
+            mult *= trees;
+
+            // check right
+            trees = 0;
+            for x1 in x+1..max_x {
+                let height1 = grid[y][x1];
+                trees += 1;
+                if height1 >= height {
+                    break;
+                }
+            }
+            mult *= trees;
+
+            // check up
+            trees = 0;
+            for y1 in (0..y).rev() {
+                let height1 = grid[y1][x];
+                trees += 1;
+                if height1 >= height {
+                    break;
+                }
+            }
+            mult *= trees;
+
+            // check down
+            trees = 0;
+            for y1 in y+1..max_y {
+                let height1 = grid[y1][x];
+                trees += 1;
+                if height1 >= height {
+                    break;
+                }
+            }
+            mult *= trees;
+
+            // update views score
+            views_grid[y][x] = mult;
+        }
+    }
+
+    views_grid
+}
+
+fn max_scenic_value(views_grid: &ViewsGrid) -> i32 {
+    let mut max = 0;
+    for row in views_grid.iter() {
+        for mult in row.iter() {
+            if *mult > max {
+                max = *mult;
+            }
+        }
+    }
+
+    max
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,14 +234,14 @@ mod tests {
         );
     }
 
-    fn input_grid() {
+    fn input_grid() -> HeightsGrid {
         vec![
             convert_to_heights(&"30373".into()),
             convert_to_heights(&"25512".into()),
             convert_to_heights(&"65332".into()),
             convert_to_heights(&"33549".into()),
             convert_to_heights(&"35390".into()),
-        ];
+        ]
     }
 
     #[test]
@@ -177,13 +264,7 @@ mod tests {
 
     #[test]
     fn test_determine_visibility() {
-        let grid = vec![
-            convert_to_heights(&"30373".into()),
-            convert_to_heights(&"25512".into()),
-            convert_to_heights(&"65332".into()),
-            convert_to_heights(&"33549".into()),
-            convert_to_heights(&"35390".into()),
-        ];
+        let grid = input_grid();
         let expected = vec![
             vec![true, true, true, true, true],
             vec![true, true, true, false, true],
@@ -213,5 +294,21 @@ mod tests {
             vec![true, true, true, true, true],
         ];
         assert_eq!(count_visible_trees(&vis_grid), 21);
+    }
+
+    #[test]
+    fn test_determine_scenic_values() {
+        let grid = input_grid();
+        assert_eq!(
+            determine_scenic_values(&grid),
+            vec![
+                vec![0; 5],
+                vec![0, 1, 4, 1, 0],
+                vec![0, 6, 1, 2, 0],
+                vec![0, 1, 8, 3, 0],
+                vec![0; 5],
+            ]
+        );
+
     }
 }
