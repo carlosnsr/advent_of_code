@@ -27,8 +27,16 @@ impl Point {
 
     fn ord(&self) -> Self {
         Self {
-            x: if self.x.abs() > 1 { (self.x/2)*(self.x.abs() - 1) } else { self.x },
-            y: if self.y.abs() > 1 { (self.y/2)*(self.y.abs() - 1) } else { self.y },
+            x: Point::ord_value(self.x),
+            y: Point::ord_value(self.y),
+        }
+    }
+
+    fn ord_value(v: isize) -> isize {
+        if v.abs() > 1 {
+            (v/v.abs())*(v.abs() - 1)
+        } else {
+            v
         }
     }
 
@@ -65,22 +73,24 @@ impl Rope {
         step
     }
 
-    fn travel(&mut self, direction: &str, distance: usize) {
+    fn travel(&mut self, instruction: &Instruction) {
+        let mut distance;
+        let mut change;
         let tail_i = self.knots.len() - 1;
-        let step = Rope::make_step(direction);
-        for _ in 0..distance {
+        let step = Rope::make_step(instruction.direction);
+        for _ in 0..instruction.distance {
             // update head
             self.knots[0].add(&step);
 
             // update subsequent knots
             for i in 1..self.knots.len() {
-                let distance = self.knots[i].distance(&self.knots[i-1]);
-                let change = distance.ord();
+                distance = self.knots[i].distance(&self.knots[i-1]);
+                change = distance.ord();
                 if distance == change {
                     break;
                 } else {
                     self.knots[i].add(&change);
-                    if i == tail_i {
+                    if i == tail_i { // i.e. is tail. register its new position
                         self.visited.insert(self.knots[tail_i].clone());
                     }
                 }
@@ -89,11 +99,23 @@ impl Rope {
     }
 }
 
-fn parse_instruction(line: &String) -> (&str, usize) {
-    let mut tokens: Vec<&str> = line.split(" ").collect();
-    let distance = tokens.pop().unwrap().parse::<usize>().unwrap();
-    let direction = tokens.pop().unwrap();
-    (direction, distance)
+struct Instruction<'a> {
+    direction: &'a str,
+    distance: usize,
+}
+
+impl<'a> Instruction<'a> {
+    fn new(direction: &'a str, distance: usize) -> Self {
+        Self {
+            direction,
+            distance,
+        }
+    }
+
+    fn parse(line: &'a String) -> Self {
+        let tokens: Vec<&str> = line.split(" ").collect();
+        Self::new(tokens[0], tokens[1].parse::<usize>().unwrap())
+    }
 }
 
 fn main() {
@@ -104,9 +126,9 @@ fn main() {
     let mut rope2 = Rope::new(10);
     for (_index, line) in reader.lines().enumerate() {
         let line = line.unwrap();
-        let (distance, direction) = parse_instruction(&line);
-        rope.travel(distance, direction);
-        rope2.travel(distance, direction);
+        let instruction = Instruction::parse(&line);
+        rope.travel(&instruction);
+        rope2.travel(&instruction);
     }
     println!("Part 1: Tail visited {} positions", rope.visited.len());
     println!("Part 2: Tail visited {} positions", rope2.visited.len());
@@ -121,7 +143,7 @@ mod tests {
     fn test_2_knot_rope_travelling() {
         let mut rope = Rope::new(2);
 
-        rope.travel("R", 4);
+        rope.travel(&Instruction::new("R", 4));
         let mut expected = Rope {
             knots: vec![Point::new(4, 0), Point::new(3, 0)],
             visited: HashSet::from([
@@ -133,7 +155,7 @@ mod tests {
         };
         assert_eq!(rope, expected);
 
-        rope.travel("U", 4);
+        rope.travel(&Instruction::new("U", 4));
         expected = Rope {
             knots: vec![Point::new(4, 4), Point::new(4, 3)],
             visited: HashSet::from([
@@ -148,7 +170,7 @@ mod tests {
         };
         assert_eq!(rope, expected);
 
-        rope.travel("L", 3);
+        rope.travel(&Instruction::new("L", 3));
         expected = Rope {
             knots: vec![Point::new(1, 4), Point::new(2, 4)],
             visited: HashSet::from([
@@ -165,7 +187,7 @@ mod tests {
         };
         assert_eq!(rope, expected);
 
-        rope.travel("D", 1);
+        rope.travel(&Instruction::new("D", 1));
         expected = Rope {
             knots: vec![Point::new(1, 3), Point::new(2, 4)],
             visited: HashSet::from([
