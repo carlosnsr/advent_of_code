@@ -18,49 +18,62 @@ impl Point {
         }
     }
 
-    fn distance(&self, target: &Point) -> usize {
-        let distance = [
-            target.x - self.x,
-            target.y - self.y,
-        ]
-            .iter()
-            .map(|v| v.abs())
-            .max()
-            .unwrap();
+    fn distance(&self, target: &Point) -> Self {
+        Self {
+            x: target.x - self.x,
+            y: target.y - self.y,
+        }
+    }
 
-        distance as usize
+    fn ord(&self) -> Self {
+        Self {
+            x: if self.x.abs() > 1 { (self.x/2)*(self.x.abs() - 1) } else { self.x },
+            y: if self.y.abs() > 1 { (self.y/2)*(self.y.abs() - 1) } else { self.y },
+        }
+    }
+
+    fn add(&mut self, target: &Point) {
+        self.x += target.x;
+        self.y += target.y;
     }
 }
 
 #[derive(Debug, PartialEq)]
 struct Rope {
-    head: Point,
-    tail: Point,
+    knots: Vec<Point>,
     visited: HashSet<Point>,
 }
 
 impl Rope {
-    fn new() -> Self {
+    fn new(length: usize) -> Self {
         Self {
-            head: Point::new(0, 0),
-            tail: Point::new(0, 0),
+            knots: vec![Point::new(0, 0); length],
             visited: HashSet::from([Point::new(0, 0)]),
         }
     }
 
     fn travel(&mut self, direction: &str, distance: usize) {
-        for _i in 0..distance {
-            let last_head = self.head.clone();
-            match direction {
-                "R" => self.head.x += 1,
-                "L" => self.head.x -= 1,
-                "U" => self.head.y += 1,
-                "D" => self.head.y -= 1,
-                _ => panic!(),
-            }
-            if self.tail.distance(&self.head) > 1 {
-                self.tail = last_head;
-                self.visited.insert(self.tail.clone());
+        let tail_i = self.knots.len() - 1;
+        for _ in 0..distance {
+            for i in 0..tail_i {
+                let mut step = Point::new(0, 0);
+                match direction {
+                    "R" => step.x += 1,
+                    "L" => step.x -= 1,
+                    "U" => step.y += 1,
+                    "D" => step.y -= 1,
+                    _ => panic!(),
+                }
+                self.knots[i].add(&step);
+
+                let distance = self.knots[i+1].distance(&self.knots[i]);
+                let change = distance.ord();
+                if !(distance == change) {
+                    self.knots[i+1].add(&change);
+                    if i+1 == tail_i {
+                        self.visited.insert(self.knots[tail_i].clone());
+                    }
+                }
             }
         }
     }
@@ -77,7 +90,7 @@ fn main() {
     let file = File::open(FILENAME).unwrap();
     let reader = BufReader::new(file);
 
-    let mut rope = Rope::new();
+    let mut rope = Rope::new(2);
     for (index, line) in reader.lines().enumerate() {
         let line = line.unwrap();
         let (distance, direction) = parse_instruction(&line);
@@ -92,13 +105,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_move_right() {
-        let mut rope = Rope::new();
+    fn test_2_knot_rope_travelling() {
+        let mut rope = Rope::new(2);
 
         rope.travel("R", 4);
         let mut expected = Rope {
-            head: Point::new(4, 0),
-            tail: Point::new(3, 0),
+            knots: vec![Point::new(4, 0), Point::new(3, 0)],
             visited: HashSet::from([
                 Point::new(0, 0),
                 Point::new(1, 0),
@@ -110,8 +122,7 @@ mod tests {
 
         rope.travel("U", 4);
         expected = Rope {
-            head: Point::new(4, 4),
-            tail: Point::new(4, 3),
+            knots: vec![Point::new(4, 4), Point::new(4, 3)],
             visited: HashSet::from([
                 Point::new(0, 0),
                 Point::new(1, 0),
@@ -126,8 +137,7 @@ mod tests {
 
         rope.travel("L", 3);
         expected = Rope {
-            head: Point::new(1, 4),
-            tail: Point::new(2, 4),
+            knots: vec![Point::new(1, 4), Point::new(2, 4)],
             visited: HashSet::from([
                 Point::new(0, 0),
                 Point::new(1, 0),
@@ -144,8 +154,7 @@ mod tests {
 
         rope.travel("D", 1);
         expected = Rope {
-            head: Point::new(1, 3),
-            tail: Point::new(2, 4),
+            knots: vec![Point::new(1, 3), Point::new(2, 4)],
             visited: HashSet::from([
                 Point::new(0, 0),
                 Point::new(1, 0),
