@@ -52,25 +52,35 @@ impl Rope {
         }
     }
 
+    fn make_step(direction: &str) -> Point {
+        let mut step = Point::new(0, 0);
+        match direction {
+            "R" => step.x += 1,
+            "L" => step.x -= 1,
+            "U" => step.y += 1,
+            "D" => step.y -= 1,
+            _ => panic!(),
+        }
+
+        step
+    }
+
     fn travel(&mut self, direction: &str, distance: usize) {
         let tail_i = self.knots.len() - 1;
+        let step = Rope::make_step(direction);
         for _ in 0..distance {
-            for i in 0..tail_i {
-                let mut step = Point::new(0, 0);
-                match direction {
-                    "R" => step.x += 1,
-                    "L" => step.x -= 1,
-                    "U" => step.y += 1,
-                    "D" => step.y -= 1,
-                    _ => panic!(),
-                }
-                self.knots[i].add(&step);
+            // update head
+            self.knots[0].add(&step);
 
-                let distance = self.knots[i+1].distance(&self.knots[i]);
+            // update subsequent knots
+            for i in 1..self.knots.len() {
+                let distance = self.knots[i].distance(&self.knots[i-1]);
                 let change = distance.ord();
-                if !(distance == change) {
-                    self.knots[i+1].add(&change);
-                    if i+1 == tail_i {
+                if distance == change {
+                    break;
+                } else {
+                    self.knots[i].add(&change);
+                    if i == tail_i {
                         self.visited.insert(self.knots[tail_i].clone());
                     }
                 }
@@ -91,12 +101,15 @@ fn main() {
     let reader = BufReader::new(file);
 
     let mut rope = Rope::new(2);
-    for (index, line) in reader.lines().enumerate() {
+    let mut rope2 = Rope::new(10);
+    for (_index, line) in reader.lines().enumerate() {
         let line = line.unwrap();
         let (distance, direction) = parse_instruction(&line);
         rope.travel(distance, direction);
+        rope2.travel(distance, direction);
     }
-    println!("Tail visited {} positions", rope.visited.len());
+    println!("Part 1: Tail visited {} positions", rope.visited.len());
+    println!("Part 2: Tail visited {} positions", rope2.visited.len());
 
 }
 
