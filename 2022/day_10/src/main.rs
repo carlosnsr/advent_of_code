@@ -9,33 +9,53 @@ enum Command {
 }
 
 #[derive(Debug)]
+// Sprite: 3 pixels wide.  X is the position of the middle pixel
+// A single pixel is drawn each cycle
 struct Register {
-    value: isize,
+    x: isize,
     cycles: usize,
     sum: isize,
+    stream: Stream,
 }
+
+const DARK_PIXEL: char = '.';
+const LIT_PIXEL: char = '#';
+const SCREEN_X: usize = 40;
+const SCREEN_Y: usize = 6;
+
+type Stream = Vec<char>;
+type Screen = Vec<Stream>;
 
 impl Register {
     fn new() -> Self {
-        Self { value: 1, cycles: 0, sum: 0 }
+        Self { x: 1, cycles: 0, sum: 0, stream: Vec::with_capacity(SCREEN_X * SCREEN_Y) }
     }
 
     fn noop(&mut self) {
         self.tick();
     }
 
-    fn addx(&mut self, value: isize) {
+    fn addx(&mut self, x: isize) {
         self.tick();
         self.tick();
-        self.value += value;
+        self.x += x;
     }
 
     fn tick(&mut self) {
+        self.draw_pixel();
         self.cycles += 1;
         if self.is_signal() {
             self.sum += self.signal_strength();
-            println!("{:?} {:?}", self, self.signal_strength());
         }
+    }
+
+    fn draw_pixel(&mut self) {
+        let pixel_x = (self.cycles % SCREEN_X) as isize;
+        let mut pixel = DARK_PIXEL;
+        if self.x == pixel_x - 1 || self.x == pixel_x || self.x == pixel_x + 1 {
+            pixel = LIT_PIXEL;
+        }
+        self.stream.push(pixel);
     }
 
     fn is_signal(&self) -> bool {
@@ -51,7 +71,7 @@ impl Register {
     }
 
     fn signal_strength(&self) -> isize {
-         self.value * (self.cycles as isize)
+         self.x * (self.cycles as isize)
     }
 
     fn parse(line: &String) -> Command {
@@ -61,6 +81,28 @@ impl Register {
             "addx" => Command::AddX(tokens[1].parse::<isize>().unwrap()),
             _ => panic!(),
         }
+    }
+
+    fn print_screen(screen: &Screen) {
+        for line in  screen.iter() {
+            let string: String = line.iter().collect();
+            println!("{:?}", string);
+        }
+        println!("");
+    }
+
+    fn make_screen(stream: &Stream) -> Screen {
+        stream
+            .chunks(SCREEN_X)
+            .map(|chunk| {
+                chunk
+                    .iter()
+                    .fold(Vec::with_capacity(SCREEN_X), |mut acc, c| {
+                        acc.push(c.clone());
+                        acc
+                    })
+            })
+            .collect::<Screen>()
     }
 }
 
@@ -72,10 +114,11 @@ fn main() {
     for (_index, line) in reader.lines().enumerate() {
         match Register::parse(&line.unwrap()) {
             Command::NoOp => register.noop(),
-            Command::AddX(value) => register.addx(value),
+            Command::AddX(x) => register.addx(x),
         }
     }
     println!("{}", register.sum);
+    Register::print_screen(&Register::make_screen(&register.stream));
 }
 
 #[cfg(test)]
@@ -241,9 +284,23 @@ mod tests {
             let line: String = (*line).into();
             match Register::parse(&line) {
                 Command::NoOp => register.noop(),
-                Command::AddX(value) => register.addx(value),
+                Command::AddX(x) => register.addx(x),
             }
         }
         assert_eq!(register.sum, 13140);
+
+        let expected_screen: Screen = [
+            "##..##..##..##..##..##..##..##..##..##..",
+            "###...###...###...###...###...###...###.",
+            "####....####....####....####....####....",
+            "#####.....#####.....#####.....#####.....",
+            "######......######......######......####",
+            "#######.......#######.......#######.....",
+        ].iter().map(|s| s.chars().collect() ).collect();
+        let actual_screen: Screen = Register::make_screen(&register.stream);
+
+        Register::print_screen(&actual_screen);
+        Register::print_screen(&expected_screen);
+        assert_eq!(actual_screen, expected_screen);
     }
 }
