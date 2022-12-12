@@ -34,11 +34,37 @@ struct Monkey {
 }
 
 impl Monkey {
-    fn make(lines: &Vec<String>) -> Self {
+}
+
+struct Parser {
+    monkey_lines: Vec<String>,
+    monkeys: Vec<Monkey>,
+}
+
+impl Parser {
+    fn new() -> Self {
+        Self { monkey_lines: Vec::new(), monkeys: Vec::new() }
+    }
+
+    fn add(&mut self, line: String) {
+        if line.is_empty() {
+            return;
+        }
+
+        self.monkey_lines.push(line);
+        if self.monkey_lines.len() == 6 {
+            let monkey = Parser::make_monkey(&self.monkey_lines);
+            self.monkey_lines.clear();
+            self.monkeys.push(monkey);
+        }
+    }
+
+    fn make_monkey(lines: &Vec<String>) -> Monkey {
+        // println!("{:?}", lines);
         Monkey {
-            items: Monkey::parse_items_line(&lines[1]),
-            operation: Monkey::parse_ops_line(&lines[2]),
-            test: Monkey::parse_test_lines(&lines),
+            items: Parser::parse_items_line(&lines[1]),
+            operation: Parser::parse_ops_line(&lines[2]),
+            test: Parser::parse_test_lines(&lines),
         }
     }
 
@@ -101,23 +127,12 @@ fn main() {
     let reader = BufReader::new(file);
 
     // read in input and make monkeys
-    let mut sum = 0;
-    let mut monkeys: Vec<Monkey> = Vec::new();
-    let mut monkey_lines: Vec<String> = Vec::new();
-    for (_index, line) in reader.lines().enumerate() {
+    let mut parser = Parser::new();
+    for line in reader.lines() {
         let line = line.unwrap();
-        if line.is_empty() {
-            println!("{:?}", monkey_lines);
-            monkeys.push(Monkey::make(&monkey_lines));
-            monkey_lines.clear();
-        } else {
-            monkey_lines.push(line);
-        }
+        parser.add(line);
     }
-    monkeys.push(Monkey::make(&monkey_lines));
-    println!("{:?}", monkeys);
-
-    println!("The sum is {}", sum);
+    println!("{:?}", parser.monkeys);
 }
 
 #[cfg(test)]
@@ -128,15 +143,15 @@ mod tests {
     fn test_parse_ops_line() {
         let input: String = "    Operation: new = old * 19".into();
         let expected = Some(("*".into(), Some(19)));
-        assert_eq!(Monkey::parse_ops_line(&input), expected);
+        assert_eq!(Parser::parse_ops_line(&input), expected);
 
         let input: String = "    Operation: new = old + 3".into();
         let expected = Some(("+".into(), Some(3)));
-        assert_eq!(Monkey::parse_ops_line(&input), expected);
+        assert_eq!(Parser::parse_ops_line(&input), expected);
 
         let input: String = "    Operation: new = old * old".into();
         let expected = Some(("*".into(), None));
-        assert_eq!(Monkey::parse_ops_line(&input), expected);
+        assert_eq!(Parser::parse_ops_line(&input), expected);
     }
 
     #[test]
@@ -154,7 +169,7 @@ mod tests {
             operation: Some(("*".into(), Some(19))),
             test: Some(("%".into(), 23, 2, 3)),
         };
-        let monkey = Monkey::make(&monkey_lines);
+        let monkey = Parser::make_monkey(&monkey_lines);
         assert_eq!(monkey, expected);
     }
 }
