@@ -8,27 +8,12 @@ use std::{
 
 const FILENAME: &str = "input";
 
-#[derive(Debug, PartialEq)]
-struct Item {
-    worry_level: usize,
-}
-
-impl Item {
-    fn new(worry_level: usize) -> Self {
-        Self { worry_level }
-    }
-}
-
-// type OpsFn = fn(usize) -> usize;
-type OpsFn = fn(usize) -> usize;
-type TestFn = fn(usize) -> usize;
-type OpsType = Option<(String, Option<usize>)>;
-type TestType = Option<(String, usize, usize, usize)>;
-
+type OpsType = (String, Option<usize>);
+type TestType = (String, usize, usize, usize);
 
 #[derive(Debug, PartialEq)]
 struct Monkey {
-    items: VecDeque<Item>,
+    items: VecDeque<usize>,
     operation: OpsType,
     test: TestType,
 }
@@ -68,12 +53,11 @@ impl Parser {
         }
     }
 
-    fn parse_items_line(line: &String) -> VecDeque<Item> {
+    fn parse_items_line(line: &String) -> VecDeque<usize> {
         let colon_i = line.find(":").unwrap() + 2;
-        let items: VecDeque<Item> = line[colon_i..]
+        let items: VecDeque<usize> = line[colon_i..]
             .split(", ")
             .map(|s| s.parse::<usize>().unwrap())
-            .map(|w| Item::new(w))
             .collect();
         items
     }
@@ -92,8 +76,8 @@ impl Parser {
             _ => Some(caps["amt"].parse().unwrap()),
         };
         match &caps["op"] {
-            "*" | "+" => Some((caps["op"].into(), amt)),
-            _ => None,
+            "*" | "+" => (caps["op"].into(), amt),
+            _ => panic!(),
         }
     }
 
@@ -118,7 +102,7 @@ impl Parser {
         assert!(BRANCH_RE.is_match(false_line));
         let fail_monkey: usize = BRANCH_RE.captures(false_line).unwrap()["monkey"].parse().unwrap();
 
-        Some(("%".into(), amt, pass_monkey, fail_monkey))
+        ("%".into(), amt, pass_monkey, fail_monkey)
     }
 }
 
@@ -142,15 +126,15 @@ mod tests {
     #[test]
     fn test_parse_ops_line() {
         let input: String = "    Operation: new = old * 19".into();
-        let expected = Some(("*".into(), Some(19)));
+        let expected = ("*".into(), Some(19));
         assert_eq!(Parser::parse_ops_line(&input), expected);
 
         let input: String = "    Operation: new = old + 3".into();
-        let expected = Some(("+".into(), Some(3)));
+        let expected = ("+".into(), Some(3));
         assert_eq!(Parser::parse_ops_line(&input), expected);
 
         let input: String = "    Operation: new = old * old".into();
-        let expected = Some(("*".into(), None));
+        let expected = ("*".into(), None);
         assert_eq!(Parser::parse_ops_line(&input), expected);
     }
 
@@ -165,9 +149,9 @@ mod tests {
             "        If false: throw to monkey 3".into(),
         ]);
         let expected = Monkey {
-            items: VecDeque::from([Item::new(79), Item::new(98)]),
-            operation: Some(("*".into(), Some(19))),
-            test: Some(("%".into(), 23, 2, 3)),
+            items: VecDeque::from([79, 98]),
+            operation: ("*".into(), Some(19)),
+            test: ("%".into(), 23, 2, 3),
         };
         let monkey = Parser::make_monkey(&monkey_lines);
         assert_eq!(monkey, expected);
