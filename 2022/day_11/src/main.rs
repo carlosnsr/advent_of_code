@@ -10,6 +10,7 @@ const FILENAME: &str = "input";
 
 type OpsType = (String, Option<usize>);
 type TestType = (String, usize, usize, usize);
+type ReliefType = (String, usize);
 
 #[derive(Debug, PartialEq)]
 struct Monkey {
@@ -19,13 +20,13 @@ struct Monkey {
 }
 
 impl Monkey {
-    fn examine_item(&mut self, relief: Option<usize>) -> (usize, usize) {
+    fn examine_item(&mut self, relief: &ReliefType) -> (usize, usize) {
         let worry = self.items.pop_front().unwrap();
-        let new_worry = self.get_new_worry(worry, relief);
+        let new_worry = self.get_new_worry(worry, &relief);
         (new_worry, self.get_next_monkey(new_worry))
     }
 
-    fn get_new_worry(&self, worry: usize, relief: Option<usize>) -> usize {
+    fn get_new_worry(&self, worry: usize, relief: &ReliefType) -> usize {
         // increase worry
         let (op, amt) = &self.operation;
         let amount = match amt {
@@ -38,9 +39,11 @@ impl Monkey {
             _ => panic!(),
         };
         // decrease worry
-        new_worry = match relief {
-            Some(value) => new_worry / value,
-            None => new_worry
+        let (op, divisor) = relief;
+        new_worry = match op.as_ref() {
+            "/" => new_worry / divisor,
+            "%" => new_worry % divisor,
+            _ => panic!(),
         };
 
         new_worry
@@ -147,11 +150,19 @@ impl Parser {
     }
 
     fn play_rounds(&mut self, rounds: usize, relief: Option<usize>) {
+        let relief_op = match relief {
+            Some(value) => ("/".into(), value),
+            None => {
+                let lcm = self.monkeys.iter().map(|m| m.test.1 ).reduce(|acc, x| lcm(acc, x)).unwrap();
+                ("%".into(), lcm)
+            }
+        };
+
         for _ in 0..rounds {
             for i in 0..self.monkeys.len() {
                 // println!("Examining monkey {}: {:?}", i, self.monkeys[i]);
                 while !self.monkeys[i].items.is_empty() {
-                    let (worry, next_monkey) = self.monkeys[i].examine_item(relief);
+                    let (worry, next_monkey) = self.monkeys[i].examine_item(&relief_op);
                     self.monkeys[next_monkey].add(worry);
                     // println!("   Giving monkey {}: {:?}", next_monkey, worry);
                     self.inspections[i] += 1;
@@ -169,6 +180,27 @@ impl Parser {
     }
 }
 
+fn lcm(first: usize, second: usize) -> usize {
+    first * second / gcd(first, second)
+}
+
+fn gcd(first: usize, second: usize) -> usize {
+    let mut max = first;
+    let mut min = second;
+    if min > max {
+        (max, min) = (min, max)
+    }
+
+    loop {
+        let rem = max % min;
+        if rem == 0 {
+            return min;
+        }
+        max = min;
+        min = rem;
+    }
+}
+
 fn main() {
     let file = File::open(FILENAME).unwrap();
     let reader = BufReader::new(file);
@@ -179,9 +211,12 @@ fn main() {
         let line = line.unwrap();
         parser.add(line);
     }
-    // println!("{:?}", parser.monkeys);
-    parser.play_rounds(20, Some(3));
-    println!("Part 1 monkey business: {:?}", parser.monkey_business());
+
+    // parser.play_rounds(20, Some(3));
+    // println!("Part 1 monkey business: {:?}", parser.monkey_business());
+
+    parser.play_rounds(10000, None);
+    println!("Part 2 monkey business: {:?}", parser.monkey_business());
 }
 
 #[cfg(test)]
@@ -229,7 +264,7 @@ mod tests {
             operation: ("*".into(), Some(19)),
             test: ("%".into(), 23, 2, 3)
         };
-        assert_eq!(monkey.examine_item(Some(3)), (500, 3));
+        assert_eq!(monkey.examine_item(&("/".into(), 3)), (500, 3));
         assert_eq!(monkey.items, VecDeque::from([98]));
     }
 
@@ -310,5 +345,20 @@ mod tests {
         assert!(parser.monkeys[3].items.is_empty());
         assert_eq!(parser.inspections, vec![101, 95, 7, 105]);
         assert_eq!(parser.monkey_business(), 101 * 105);
+    }
+
+    #[test]
+    fn test_round_part_2() {
+        let mut parser = Parser::new();
+        for line in input().iter() {
+           parser.add(line.to_string());
+        }
+        parser.play_rounds(1000, None);
+        assert_eq!(parser.inspections, vec![5204, 4792, 199, 5192]);
+    }
+
+    #[test]
+    fn test_lcm() {
+        assert_eq!(lcm(4, 6), 12);
     }
 }
