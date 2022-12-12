@@ -19,13 +19,13 @@ struct Monkey {
 }
 
 impl Monkey {
-    fn examine_item(&mut self) -> (usize, usize) {
+    fn examine_item(&mut self, relief: Option<usize>) -> (usize, usize) {
         let worry = self.items.pop_front().unwrap();
-        let new_worry = self.get_new_worry(worry);
+        let new_worry = self.get_new_worry(worry, relief);
         (new_worry, self.get_next_monkey(new_worry))
     }
 
-    fn get_new_worry(&self, worry: usize) -> usize {
+    fn get_new_worry(&self, worry: usize, relief: Option<usize>) -> usize {
         // increase worry
         let (op, amt) = &self.operation;
         let amount = match amt {
@@ -38,7 +38,10 @@ impl Monkey {
             _ => panic!(),
         };
         // decrease worry
-        new_worry /= 3;
+        new_worry = match relief {
+            Some(value) => new_worry / value,
+            None => new_worry
+        };
 
         new_worry
     }
@@ -143,12 +146,12 @@ impl Parser {
         ("%".into(), amt, pass_monkey, fail_monkey)
     }
 
-    fn play_rounds(&mut self, rounds: usize) {
+    fn play_rounds(&mut self, rounds: usize, relief: Option<usize>) {
         for _ in 0..rounds {
             for i in 0..self.monkeys.len() {
                 // println!("Examining monkey {}: {:?}", i, self.monkeys[i]);
                 while !self.monkeys[i].items.is_empty() {
-                    let (worry, next_monkey) = self.monkeys[i].examine_item();
+                    let (worry, next_monkey) = self.monkeys[i].examine_item(relief);
                     self.monkeys[next_monkey].add(worry);
                     // println!("   Giving monkey {}: {:?}", next_monkey, worry);
                     self.inspections[i] += 1;
@@ -177,7 +180,7 @@ fn main() {
         parser.add(line);
     }
     // println!("{:?}", parser.monkeys);
-    parser.play_rounds(20);
+    parser.play_rounds(20, Some(3));
     println!("Part 1 monkey business: {:?}", parser.monkey_business());
 }
 
@@ -226,13 +229,12 @@ mod tests {
             operation: ("*".into(), Some(19)),
             test: ("%".into(), 23, 2, 3)
         };
-        assert_eq!(monkey.examine_item(), (500, 3));
+        assert_eq!(monkey.examine_item(Some(3)), (500, 3));
         assert_eq!(monkey.items, VecDeque::from([98]));
     }
 
-    #[test]
-    fn test_round() {
-        let input = vec![
+    fn input() -> [&'static str; 27] {
+        [
             "Monkey 0:",
             "  Starting items: 79, 98",
             "  Operation: new = old * 19",
@@ -260,10 +262,13 @@ mod tests {
             "  Test: divisible by 17",
             "    If true: throw to monkey 0",
             "    If false: throw to monkey 1",
-        ];
+        ]
+    }
 
+    #[test]
+    fn test_round() {
         let mut parser = Parser::new();
-        for line in input.iter() {
+        for line in input().iter() {
            parser.add(line.to_string());
         }
         // for monkey in parser.monkeys.iter() { println!("{:?}", monkey); }
@@ -292,13 +297,13 @@ mod tests {
         ];
         assert_eq!(parser.monkeys, expected_monkeys);
 
-        parser.play_rounds(1);
+        parser.play_rounds(1, Some(3));
         assert_eq!(parser.monkeys[0].items, VecDeque::from([20, 23, 27, 26]));
         assert_eq!(parser.monkeys[1].items, VecDeque::from([2080, 25, 167, 207, 401, 1046]));
         assert!(parser.monkeys[2].items.is_empty());
         assert!(parser.monkeys[3].items.is_empty());
 
-        parser.play_rounds(19);
+        parser.play_rounds(19, Some(3));
         assert_eq!(parser.monkeys[0].items, VecDeque::from([10, 12, 14, 26, 34]));
         assert_eq!(parser.monkeys[1].items, VecDeque::from([245, 93, 53, 199, 115]));
         assert!(parser.monkeys[2].items.is_empty());
