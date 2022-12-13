@@ -48,6 +48,11 @@ impl Grid {
         None
     }
 
+    fn get(&self, target: &Point) -> Option<Height> {
+        let (x, y) = (target.x, target.y);
+        Some(self.grid[y][x])
+    }
+
     fn len_x(&self) -> usize {
         self.grid[0].len()
     }
@@ -74,16 +79,14 @@ fn climb_to_top(grid: &Grid) -> Option<Vec<Point>> {
     let end = grid.find('E').unwrap();
     let mut visited: HashSet<Point> = HashSet::new();
 
-    let mut path = match hill_climb(&grid, &start, &end, &mut visited) {
+    match hill_climb(&grid, &start, &end, &mut visited) {
         Some(mut path) => {
             path.push(start.clone());
             path.reverse();
             Some(path)
         },
         None => None,
-    };
-
-    path
+    }
 }
 
 fn hill_climb(grid: &Grid, current: &Point, end: &Point, visited: &mut HashSet<Point>) -> Option<Vec<Point>> {
@@ -109,32 +112,57 @@ fn hill_climb(grid: &Grid, current: &Point, end: &Point, visited: &mut HashSet<P
 fn find_neighbours(grid: &Grid, center: &Point, visited: &HashSet<Point>) -> Vec<Point> {
     let (x, y) = (center.x, center.y);
     let mut neighbours = Vec::new();
-    if x + 1 < grid.len_x() {
-        let neighbour = Point::new(x + 1, y);
-        if !visited.contains(&neighbour) {
-            neighbours.push(neighbour); // right
-        }
+    if x + 1 < grid.len_x() { // right
+        neighbours.push(Point::new(x + 1, y));
     }
-    if x > 0 {
-        let neighbour = Point::new(x - 1, y);
-        if !visited.contains(&neighbour) {
-            neighbours.push(neighbour); // left
-        }
+    if x > 0 { // left
+        neighbours.push(Point::new(x - 1, y));
     }
-    if y > 0 {
-        let neighbour = Point::new(x, y - 1);
-        if !visited.contains(&neighbour) {
-            neighbours.push(neighbour); // up
-        }
+    if y > 0 { // up
+        neighbours.push(Point::new(x, y - 1));
     }
-    if y + 1 < grid.len_y() {
-        let neighbour = Point::new(x, y + 1);
-        if !visited.contains(&neighbour) {
-            neighbours.push(neighbour); // down
-        }
+    if y + 1 < grid.len_y() { // down
+        neighbours.push(Point::new(x, y + 1));
     }
 
-    neighbours
+    let mut vetted = Vec::new();
+    for neighbour in neighbours.drain(..) {
+        if is_vetted(&grid, &center, &neighbour, &visited) {
+            vetted.push(neighbour)
+        }
+    }
+    vetted
+}
+
+fn is_vetted(grid: &Grid, center: &Point, neighbour: &Point, visited: &HashSet<Point>) -> bool {
+    if visited.contains(&neighbour) {
+        return false;
+    }
+
+    let center_height = height(grid.get(&center).unwrap()).unwrap();
+    let neighbour_height = match height(grid.get(&neighbour).unwrap()) {
+        Some(value) => value,
+        None => center_height + 1,
+    };
+    let diff = if center_height > neighbour_height {
+        center_height - neighbour_height
+    } else {
+        neighbour_height - center_height
+    };
+
+    if diff > 1 {
+        false
+    } else {
+        true
+    }
+}
+
+fn height(value: Height) -> Option<usize> {
+    match value {
+        'S' => Some(0), // TODO: should match 'a'
+        'E' => None, // TODO: should match 'z'
+        _ => Some(value as usize - 'a' as usize),
+    }
 }
 
 #[cfg(test)]
