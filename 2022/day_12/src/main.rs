@@ -114,6 +114,9 @@ fn hill_climb(grid: &Grid, current: &Point, end: &Point, visited: &mut HashSet<P
         let neighbours_by_distance = get_neighbours_by_distance(neighbours, &end);
         for i in 0..neighbours_by_distance.len() {
             let (_, neighbour) = &neighbours_by_distance[i];
+            if visited.contains(&neighbour) {
+                continue;
+            }
             match hill_climb(&grid, neighbour, &end, visited) {
                 Some(mut path) => {
                     path.push(neighbour.clone());
