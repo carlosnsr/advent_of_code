@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::VecDeque,
     fs::File,
     io::{BufRead, BufReader},
 };
@@ -17,18 +17,17 @@ fn main() {
     }
 
     println!("The grid is {:?}", grid);
-    // if let Some(path) = climb_to_top(&grid) {
-    //     println!("The shortestt number of steps is {}", path.len() - 1);
-    // } else {
-    //     println!("No path was found");
-    // }
+    if let Some(path) = bfsearch(&mut grid) {
+        println!("The shortestt number of steps is {}", path.len() - 1);
+    } else {
+        println!("No path was found");
+    }
 }
 
 type Height = char;
 type Heights = Vec<Height>;
-type Neighbours = Vec<Point>;
+type Points = Vec<Point>;
 type Path = Vec<Point>;
-type GridType<'a> = Grid<Node<'a>>;
 
 trait Newable {
     fn new(value: Height) -> Self;
@@ -39,13 +38,13 @@ trait Valuable {
 }
 
 #[derive(Debug)]
-struct Node<'a> {
+struct Node {
     value: Height,
     visited: bool,
-    parent: Option<&'a Node<'a>>,
+    parent: Option<Point>,
 }
 
-impl<'a> Newable for Node<'a> {
+impl Newable for Node {
     fn new(value: Height) -> Self {
         Self {
             value,
@@ -55,7 +54,7 @@ impl<'a> Newable for Node<'a> {
     }
 }
 
-impl<'a> Valuable for Node<'a> {
+impl Valuable for Node {
     fn value(&self) -> &Height {
         &self.value
     }
@@ -87,6 +86,11 @@ impl<T: Newable + Valuable> Grid<T> {
         None
     }
 
+    fn get_mut(&mut self, target: &Point) -> Option<&mut T> {
+        let (x, y) = (target.x, target.y);
+        Some(&mut self.grid[y][x])
+    }
+
     fn get(&self, target: &Point) -> Option<&T> {
         let (x, y) = (target.x, target.y);
         Some(&self.grid[y][x])
@@ -116,6 +120,97 @@ impl Point {
         let (dx, dy): (f32, f32) = ((other.x as isize - self.x as isize) as f32, (other.y as isize - self.y as isize) as f32);
 
         (dx * dx + dy * dy).sqrt()
+    }
+}
+
+fn bfsearch(grid: &mut Grid<Node>) -> Option<Points> {
+    let start = grid.find('S').unwrap();
+    let end = grid.find('E').unwrap();
+
+    let mut root = grid.get_mut(&start).unwrap();
+    let mut queue: VecDeque<Point> = VecDeque::new();
+    root.visited = true;
+    queue.push_back(start.clone());
+    while !queue.is_empty() {
+        if let Some(current) = queue.pop_front() {
+            if current == end {
+                let mut path: Points = Vec::new();
+                path.push(current.clone());
+                let mut node = grid.get(&current).unwrap();
+                while let Some(parent) = &node.parent {
+                    path.push(parent.clone());
+                    node = grid.get(&parent).unwrap();
+                }
+                path.reverse();
+                return Some(path);
+            }
+
+            let mut neighbours = find_neighbours(&grid, &current);
+            for neighbour in neighbours.drain(0..) {
+                if let Some(node) = grid.get_mut(&neighbour) {
+                    if node.visited {
+                        continue;
+                    }
+                    node.visited = true;
+                    node.parent = Some(current.clone());
+                    queue.push_back(neighbour);
+                }
+            }
+        }
+    }
+
+    None
+}
+
+fn find_neighbours(grid: &Grid<Node>, center: &Point) -> Points {
+    let (x, y) = (center.x, center.y);
+    let mut neighbours = Vec::new();
+    if x + 1 < grid.len_x() { // right
+        neighbours.push(Point::new(x + 1, y));
+    }
+    if x > 0 { // left
+        neighbours.push(Point::new(x - 1, y));
+    }
+    if y > 0 { // up
+        neighbours.push(Point::new(x, y - 1));
+    }
+    if y + 1 < grid.len_y() { // down
+        neighbours.push(Point::new(x, y + 1));
+    }
+
+    let mut vetted = Vec::new();
+    for neighbour in neighbours.drain(..) {
+        let center_height = height(grid.get(&center).unwrap().value) as isize;
+        if is_vetted(&grid, center_height, &neighbour) {
+            vetted.push(neighbour)
+        }
+    }
+    // println!("   Vetted Neighbours {:?}", &vetted);
+    vetted
+}
+
+fn is_vetted(grid: &Grid<Node>, center_height: isize, neighbour: &Point) -> bool {
+    if let Some(node) = grid.get(neighbour) {
+        if node.visited {
+            return false;
+        }
+    }
+
+    let neighbour_height = height(grid.get(&neighbour).unwrap().value) as isize;
+    let diff = (center_height - neighbour_height).abs();
+    // println!("   Comparing with {:?} (height: {}): {}", neighbour, neighbour_height, diff);
+    if diff > 1 {
+        false
+    } else {
+        true
+    }
+}
+
+fn height(value: Height) -> usize {
+    match value {
+        'S' => 0, // should match the height of 'a'
+        'E' => 'z' as usize - 'a' as usize, // should match the height of 'z'
+        _ => value as usize - 'a' as usize,
     }
 }
 
@@ -253,12 +348,11 @@ fn is_climbable(grid: &Grid, source: &Point, target: &Point) -> bool {
 }
 */
 
-/*
 #[cfg(test)]
-mod tests {
+mod bfs_tests {
     use super::*;
 
-    fn make_grid(lines: &Vec<String>) -> Grid {
+    fn make_grid(lines: &Vec<String>) -> Grid<Node> {
         let mut grid = Grid::new();
         for line in lines.iter() {
             grid.push(&line);
@@ -287,6 +381,117 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_on_simple_grid() {
+        let input = vec![
+            "Sabcde".into(),
+            "yzEdgf".into(),
+            "xwvutg".into(),
+            "opqrsh".into(),
+            "nmlkji".into(),
+        ];
+        let mut grid = make_grid(&input);
+        let path = bfsearch(&mut grid);
+        assert_eq!(path, Some(vec![
+            Point::new(0, 0),
+            Point::new(1, 0),
+            Point::new(2, 0),
+            Point::new(3, 0),
+            Point::new(4, 0),
+            Point::new(5, 0),
+            Point::new(5, 1),
+            Point::new(5, 2),
+            Point::new(5, 3),
+            Point::new(5, 4),
+
+            Point::new(4, 4),
+            Point::new(3, 4),
+            Point::new(2, 4),
+            Point::new(1, 4),
+            Point::new(0, 4),
+
+            Point::new(0, 3),
+            Point::new(1, 3),
+            Point::new(2, 3),
+            Point::new(3, 3),
+            Point::new(4, 3),
+
+            Point::new(4, 2),
+            Point::new(3, 2),
+            Point::new(2, 2),
+            Point::new(1, 2),
+            Point::new(0, 2),
+
+            Point::new(0, 1),
+            Point::new(1, 1),
+            Point::new(2, 1),
+        ]));
+    }
+
+    #[test]
+    fn test_on_example() {
+        // let expected: Vec<String> = vec![
+        //     "v..v<<<<".into(),
+        //     ">v.vv<<^".into(),
+        //     ".>vv>E^^".into(),
+        //     "..v>>>^^".into(),
+        //     "..>>>>>^".into(),
+        // ];
+        let expected = Some(vec![
+            Point::new(0, 0),
+            Point::new(0, 1),
+            Point::new(1, 1),
+            Point::new(1, 2),
+            Point::new(2, 2),
+            Point::new(2, 3),
+            Point::new(2, 4),
+            Point::new(3, 4),
+            Point::new(4, 4),
+            Point::new(5, 4),
+            Point::new(6, 4),
+            Point::new(7, 4),
+            Point::new(7, 3),
+            Point::new(7, 2),
+            Point::new(7, 1),
+            Point::new(7, 0),
+            Point::new(6, 0),
+            Point::new(5, 0),
+            Point::new(4, 0),
+            Point::new(3, 0),
+            Point::new(3, 1),
+            Point::new(3, 2),
+            Point::new(3, 3),
+            Point::new(4, 3),
+            Point::new(5, 3),
+            Point::new(6, 3),
+            Point::new(6, 2),
+            Point::new(6, 1),
+            Point::new(5, 1),
+            Point::new(4, 1),
+            Point::new(4, 2),
+            Point::new(5, 2),
+        ]);
+        let mut grid = make_grid(&example_input());
+        let path = bfsearch(&mut grid);
+        print("Path", &path);
+        print("Expected", &expected);
+        // assert_eq!(path, expected);
+        if let Some(path) = path {
+            if let Some(expected) = expected {
+                assert_eq!(path.len(), expected.len());
+            } else {
+                assert!(false, "Expected is None")
+            }
+        } else {
+            assert!(false, "Path is None")
+        }
+    }
+}
+
+/*
+#[cfg(test)]
+mod tests {
+    #[ignore]
     #[test]
     fn test_hill_climb() {
         // let expected: Vec<String> = vec![
