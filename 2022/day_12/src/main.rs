@@ -10,44 +10,76 @@ fn main() {
     let file = File::open(FILENAME).unwrap();
     let reader = BufReader::new(file);
 
-    let mut grid: Grid = Grid::new();
+    let mut grid: Grid<Node> = Grid::new();
     for (_index, line) in reader.lines().enumerate() {
         let line = line.unwrap();
         grid.push(&line);
     }
 
-    // println!("The grid is {:?}", grid);
-    if let Some(path) = climb_to_top(&grid) {
-        println!("The shortestt number of steps is {}", path.len() - 1);
-    } else {
-        println!("No path was found");
-    }
+    println!("The grid is {:?}", grid);
+    // if let Some(path) = climb_to_top(&grid) {
+    //     println!("The shortestt number of steps is {}", path.len() - 1);
+    // } else {
+    //     println!("No path was found");
+    // }
 }
 
 type Height = char;
 type Heights = Vec<Height>;
 type Neighbours = Vec<Point>;
 type Path = Vec<Point>;
+type GridType<'a> = Grid<Node<'a>>;
 
-#[derive(Debug)]
-struct Grid {
-    grid: Vec<Heights>,
+trait Newable {
+    fn new(value: Height) -> Self;
 }
 
-impl Grid {
+trait Valuable {
+    fn value(&self) -> &Height;
+}
+
+#[derive(Debug)]
+struct Node<'a> {
+    value: Height,
+    visited: bool,
+    parent: Option<&'a Node<'a>>,
+}
+
+impl<'a> Newable for Node<'a> {
+    fn new(value: Height) -> Self {
+        Self {
+            value,
+            visited: false,
+            parent: None,
+        }
+    }
+}
+
+impl<'a> Valuable for Node<'a> {
+    fn value(&self) -> &Height {
+        &self.value
+    }
+}
+
+#[derive(Debug)]
+struct Grid<T> {
+    grid: Vec<Vec<T>>,
+}
+
+impl<T: Newable + Valuable> Grid<T> {
     fn new() -> Self {
         Self { grid: Vec::new() }
     }
 
     fn push(&mut self, line: &String) {
-        let heights = line.chars().collect::<Heights>();
-        self.grid.push(heights);
+        let row: Vec<T> = line.chars().map(|c| T::new(c)).collect();
+        self.grid.push(row);
     }
 
     fn find(&self, value: Height) -> Option<Point> {
         for y in 0..self.len_y() {
             for x in 0..self.len_x() {
-                if self.grid[y][x] == value {
+                if *self.grid[y][x].value() == value {
                     return Some(Point::new(x, y));
                 }
             }
@@ -55,9 +87,9 @@ impl Grid {
         None
     }
 
-    fn get(&self, target: &Point) -> Option<Height> {
+    fn get(&self, target: &Point) -> Option<&T> {
         let (x, y) = (target.x, target.y);
-        Some(self.grid[y][x])
+        Some(&self.grid[y][x])
     }
 
     fn len_x(&self) -> usize {
@@ -87,6 +119,7 @@ impl Point {
     }
 }
 
+/*
 fn climb_to_top(grid: &Grid) -> Option<Path> {
     let start = grid.find('S').unwrap();
     println!("Start position is: {:?}", &start);
@@ -192,7 +225,7 @@ fn height(value: Height) -> usize {
         _ => value as usize - 'a' as usize,
     }
 }
-
+*/
 /*
 impl Grid {
     fn get(&self, target: &Point) -> Option<Height> {
@@ -220,6 +253,7 @@ fn is_climbable(grid: &Grid, source: &Point, target: &Point) -> bool {
 }
 */
 
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -369,3 +403,4 @@ mod tests {
         assert_eq!(path, expected);
     }
 }
+*/
