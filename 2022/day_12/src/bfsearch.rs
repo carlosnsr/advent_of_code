@@ -1,85 +1,9 @@
+use crate::{
+    common::get_neighbours,
+    grid::{Grid, Node},
+    point::{Point, Points},
+};
 use std::collections::VecDeque;
-use crate::point::Point;
-use crate::common::{Height, height};
-
-pub type Points = Vec<Point>;
-
-pub trait Newable {
-    fn new(value: Height) -> Self;
-}
-
-pub trait Valuable {
-    fn value(&self) -> &Height;
-}
-
-#[derive(Debug)]
-pub struct Node {
-    pub value: Height,
-    pub visited: bool,
-    parent: Option<Point>,
-}
-
-impl Newable for Node {
-    fn new(value: Height) -> Self {
-        Self {
-            value,
-            visited: false,
-            parent: None,
-        }
-    }
-}
-
-impl Valuable for Node {
-    fn value(&self) -> &Height {
-        &self.value
-    }
-}
-
-#[derive(Debug)]
-pub struct Grid<T> {
-    grid: Vec<Vec<T>>,
-}
-
-impl<T: Newable + Valuable> Grid<T> {
-    pub fn new() -> Self {
-        Self { grid: Vec::new() }
-    }
-
-    pub fn push(&mut self, line: &String) {
-        let row: Vec<T> = line.chars().map(|c| T::new(c)).collect();
-        self.grid.push(row);
-    }
-
-    pub fn find(&self, value: Height) -> Option<Point> {
-        for y in 0..self.len_y() {
-            for x in 0..self.len_x() {
-                if *self.grid[y][x].value() == value {
-                    return Some(Point::new(x, y));
-                }
-            }
-        }
-        None
-    }
-
-    pub fn get_mut(&mut self, target: &Point) -> Option<&mut T> {
-        let (x, y) = (target.x, target.y);
-        Some(&mut self.grid[y][x])
-    }
-
-    pub fn get(&self, target: &Point) -> Option<&T> {
-        let (x, y) = (target.x, target.y);
-        Some(&self.grid[y][x])
-    }
-
-    pub fn len_x(&self) -> usize {
-        self.grid[0].len()
-    }
-
-    pub fn len_y(&self) -> usize {
-        self.grid.len()
-    }
-}
-
 
 pub fn bfsearch(grid: &mut Grid<Node>) -> Option<Points> {
     let start = grid.find('S').unwrap();
@@ -103,7 +27,7 @@ pub fn bfsearch(grid: &mut Grid<Node>) -> Option<Points> {
                 return Some(path);
             }
 
-            let mut neighbours = find_neighbours(&grid, &current);
+            let mut neighbours = get_neighbours(&grid, &current);
             for neighbour in neighbours.drain(0..) {
                 if let Some(node) = grid.get_mut(&neighbour) {
                     if node.visited {
@@ -118,52 +42,6 @@ pub fn bfsearch(grid: &mut Grid<Node>) -> Option<Points> {
     }
 
     None
-}
-
-fn find_neighbours(grid: &Grid<Node>, center: &Point) -> Points {
-    let (x, y) = (center.x, center.y);
-    let mut neighbours = Vec::new();
-    if x + 1 < grid.len_x() { // right
-        neighbours.push(Point::new(x + 1, y));
-    }
-    if x > 0 { // left
-        neighbours.push(Point::new(x - 1, y));
-    }
-    if y > 0 { // up
-        neighbours.push(Point::new(x, y - 1));
-    }
-    if y + 1 < grid.len_y() { // down
-        neighbours.push(Point::new(x, y + 1));
-    }
-
-    let mut vetted = Vec::new();
-    for neighbour in neighbours.drain(..) {
-        let center_height = height(grid.get(&center).unwrap().value) as isize;
-        if is_vetted(&grid, center_height, &neighbour) {
-            vetted.push(neighbour)
-        }
-    }
-    // println!("   Vetted Neighbours {:?}", &vetted);
-    vetted
-}
-
-fn is_vetted(grid: &Grid<Node>, center_height: isize, neighbour: &Point) -> bool {
-    if let Some(node) = grid.get(neighbour) {
-        if node.visited {
-            return false;
-        }
-
-        let neighbour_height = height(node.value) as isize;
-        let diff = (center_height - neighbour_height).abs();
-        // println!("   Comparing with {:?} (height: {}): {}", neighbour, neighbour_height, diff);
-        if diff > 1 {
-            false
-        } else {
-            true
-        }
-    } else {
-        false
-    }
 }
 
 #[cfg(test)]
