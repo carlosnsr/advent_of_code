@@ -1,14 +1,14 @@
 use std::collections::VecDeque;
-use super::point::Point;
+use crate::point::Point;
 
-type Height = char;
-type Points = Vec<Point>;
+pub type Height = char;
+pub type Points = Vec<Point>;
 
-trait Newable {
+pub trait Newable {
     fn new(value: Height) -> Self;
 }
 
-trait Valuable {
+pub trait Valuable {
     fn value(&self) -> &Height;
 }
 
@@ -50,7 +50,7 @@ impl<T: Newable + Valuable> Grid<T> {
         self.grid.push(row);
     }
 
-    fn find(&self, value: Height) -> Option<Point> {
+    pub fn find(&self, value: Height) -> Option<Point> {
         for y in 0..self.len_y() {
             for x in 0..self.len_x() {
                 if *self.grid[y][x].value() == value {
@@ -61,21 +61,21 @@ impl<T: Newable + Valuable> Grid<T> {
         None
     }
 
-    fn get_mut(&mut self, target: &Point) -> Option<&mut T> {
+    pub fn get_mut(&mut self, target: &Point) -> Option<&mut T> {
         let (x, y) = (target.x, target.y);
         Some(&mut self.grid[y][x])
     }
 
-    fn get(&self, target: &Point) -> Option<&T> {
+    pub fn get(&self, target: &Point) -> Option<&T> {
         let (x, y) = (target.x, target.y);
         Some(&self.grid[y][x])
     }
 
-    fn len_x(&self) -> usize {
+    pub fn len_x(&self) -> usize {
         self.grid[0].len()
     }
 
-    fn len_y(&self) -> usize {
+    pub fn len_y(&self) -> usize {
         self.grid.len()
     }
 }
