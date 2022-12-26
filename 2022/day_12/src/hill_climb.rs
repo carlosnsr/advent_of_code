@@ -1,8 +1,7 @@
 use crate::point::Point;
-use crate::bfsearch::{Grid, Height, Node, Points};
+use crate::bfsearch::{Grid, Node, Points};
+use crate::common::height;
 use std::collections::HashSet;
-
-type Heights = Vec<Height>;
 
 pub fn climb_to_top(grid: &Grid<Node>) -> Option<Points> {
     let start = grid.find('S').unwrap();
@@ -47,7 +46,7 @@ fn hill_climb(grid: &Grid<Node>, current: &Point, end: &Point, visited: &mut Has
     None
 }
 
-fn find_neighbours(grid: &Grid<Node>, center: &Point, visited: &HashSet<Point>) -> Neighbours {
+fn find_neighbours(grid: &Grid<Node>, center: &Point, visited: &HashSet<Point>) -> Points {
     let (x, y) = (center.x, center.y);
     let mut neighbours = Vec::new();
     if x + 1 < grid.len_x() { // right
@@ -78,8 +77,8 @@ fn is_vetted(grid: &Grid<Node>, center: &Point, neighbour: &Point, visited: &Has
         return false;
     }
 
-    let center_height = height(grid.get(&center).unwrap()) as isize;
-    let neighbour_height = height(grid.get(&neighbour).unwrap()) as isize;
+    let center_height = height(grid.get(&center).unwrap().value) as isize;
+    let neighbour_height = height(grid.get(&neighbour).unwrap().value) as isize;
     let diff = (center_height - neighbour_height).abs();
     println!("   Comparing {:?} (height: {}) with {:?} (height: {}): {}", &center, center_height, neighbour, neighbour_height, diff);
     if diff > 1 {
@@ -91,7 +90,7 @@ fn is_vetted(grid: &Grid<Node>, center: &Point, neighbour: &Point, visited: &Has
 
 type NeighboursByDistance = Vec<(f32, Point)>;
 
-fn get_neighbours_by_distance(mut neighbours: Neighbours, end: &Point) -> NeighboursByDistance {
+fn get_neighbours_by_distance(mut neighbours: Points, end: &Point) -> NeighboursByDistance {
     let mut neighbours_by_distance: NeighboursByDistance = neighbours
         .drain(0..)
         .map(|neighbour| (neighbour.distance(&end), neighbour))
@@ -102,42 +101,39 @@ fn get_neighbours_by_distance(mut neighbours: Neighbours, end: &Point) -> Neighb
     neighbours_by_distance
 }
 
-fn height(value: Height) -> usize {
-    match value {
-        'S' => 0, // TODO: should match 'a'
-        'E' => 'z' as usize - 'a' as usize, // TODO: should match 'z'
-        _ => value as usize - 'a' as usize,
-    }
-}
-/*
-impl Grid {
-    fn get(&self, target: &Point) -> Option<Height> {
-        let (x, y) = (target.x, target.y);
-        Some(self.grid[y][x])
-    }
-
-    fn mark(&mut self, target: &Point, mark: char) {
-        let (x, y) = (target.x, target.y);
-        self.visited[y][x] = mark;
-    }
-
-    fn was_visited(&self, target: &Point) -> bool {
-        let (x, y) = (target.x, target.y);
-        self.visited[y][x] != '.'
-    }
-}
-
-fn is_climbable(grid: &Grid, source: &Point, target: &Point) -> bool {
-    let source_height = grid.get(&source).unwrap() as isize;
-    let target_height = grid.get(&target).unwrap() as isize;
-    println!("{:?} {:?}", source_height, target_height);
-
-    target_height == 99 || (source_height - target_height).abs() <= 1
-}
-*/
-
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    fn make_grid(lines: &Vec<String>) -> Grid<Node> {
+        let mut grid = Grid::new();
+        for line in lines.iter() {
+            grid.push(&line);
+        }
+        grid
+    }
+
+    fn example_input() -> Vec<String> {
+        vec![
+            "Sabqponm".into(),
+            "abcryxxl".into(),
+            "accszExk".into(),
+            "acctuvwj".into(),
+            "abdefghi".into(),
+        ]
+    }
+
+    fn print(title: &str, path: &Option<Points>) {
+        if let Some(path) = path {
+            println!("{} ({}):", title, path.len());
+            for point in path.iter() {
+                println!("   {:?}", point);
+            }
+        } else {
+            println!("{}: None", title);
+        }
+    }
+
     #[ignore]
     #[test]
     fn test_hill_climb() {

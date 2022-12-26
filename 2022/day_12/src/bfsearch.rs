@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use crate::point::Point;
+use crate::common::{Height, height};
 
-pub type Height = char;
 pub type Points = Vec<Point>;
 
 pub trait Newable {
@@ -14,8 +14,8 @@ pub trait Valuable {
 
 #[derive(Debug)]
 pub struct Node {
-    value: Height,
-    visited: bool,
+    pub value: Height,
+    pub visited: bool,
     parent: Option<Point>,
 }
 
@@ -152,23 +152,17 @@ fn is_vetted(grid: &Grid<Node>, center_height: isize, neighbour: &Point) -> bool
         if node.visited {
             return false;
         }
-    }
 
-    let neighbour_height = height(grid.get(&neighbour).unwrap().value) as isize;
-    let diff = (center_height - neighbour_height).abs();
-    // println!("   Comparing with {:?} (height: {}): {}", neighbour, neighbour_height, diff);
-    if diff > 1 {
-        false
+        let neighbour_height = height(node.value) as isize;
+        let diff = (center_height - neighbour_height).abs();
+        // println!("   Comparing with {:?} (height: {}): {}", neighbour, neighbour_height, diff);
+        if diff > 1 {
+            false
+        } else {
+            true
+        }
     } else {
-        true
-    }
-}
-
-fn height(value: Height) -> usize {
-    match value {
-        'S' => 0, // should match the height of 'a'
-        'E' => 'z' as usize - 'a' as usize, // should match the height of 'z'
-        _ => value as usize - 'a' as usize,
+        false
     }
 }
 
