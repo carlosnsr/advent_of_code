@@ -20,39 +20,38 @@ fn shortest_path(grid: &Grid<Node>, start: &Point, target: &Point) -> Option<Poi
     let grid_size = grid.len_x() * grid.len_y();
     let mut distances: HashMap<Point, DNode> = HashMap::with_capacity(grid_size);
     let mut queue: BinaryHeap<Reverse<QNode>> = BinaryHeap::new();
-    let mut visited: HashSet<Point> = HashSet::with_capacity(grid_size);
 
-    // add start
+    // add start and its neighbours, queue up its neighbours
     distances.insert(start.clone(), (0, None));
-    queue.push(Reverse((0, start.clone())));
-
-    while !queue.is_empty() {
-        let Reverse((dist, current)) = queue.pop().unwrap();
-        visited.insert(current.clone());
-        // println!("\n\nCurrent: {:?}", current);
-
-        let mut neighbours = get_neighbours(&grid, &current);
-        // println!("Neighbours: {:?}", neighbours);
-        for neighbour in neighbours.drain(0..) {
-            let new_dist = dist + 1;
-            let distance_node = distances.entry(neighbour.clone())
-                .or_insert((new_dist, Some(current.clone())));
-            if new_dist < distance_node.0 {
-                *distance_node = (new_dist, Some(current.clone()));
-            }
-            if !visited.contains(&neighbour) {
-                queue.push(Reverse((new_dist, neighbour.clone())));
-            }
-        }
-        // println!("Distances\n   {:?}", distances);
-        // println!("Queue\n   {:?}", queue);
-        // println!("Visited\n   {:?}", visited);
+    for neighbour in get_neighbours(&grid, &start) {
+        distances.insert(neighbour.clone(), (1, Some(start.clone())));
+        queue.push(Reverse((1, neighbour.clone())));
     }
 
-    if visited.contains(&target) {
-        let mut distance_node = distances.get(&target).unwrap();
+    while let Some(Reverse((distance, popped))) = queue.pop() {
+        for neighbour in get_neighbours(&grid, &popped) {
+            let new_distance = distance + 1;
+            match distances.get(&neighbour) {
+                // if we've never been here before, add it and queue it
+                None => {
+                    distances.insert(neighbour.clone(), (new_distance, Some(popped.clone())));
+                    queue.push(Reverse((new_distance, neighbour.clone())));
+                }
+                // if we already found a smaller distance, do nothing
+                Some((best_distance, _)) if new_distance >= *best_distance => {},
+                // we have found a shorter distance, save it and queue it
+                Some(_) => {
+                    *(distances.get_mut(&neighbour).unwrap()) = (new_distance, Some(popped.clone()));
+                    queue.push(Reverse((new_distance, neighbour.clone())));
+                }
+            }
+        }
+    }
+
+    if distances.contains_key(&target) {
         let mut path = Vec::new();
         path.push(target.clone());
+        let mut distance_node = distances.get(&target).unwrap();
         while let Some(parent) = &distance_node.1 {
             path.push(parent.clone());
             distance_node = distances.get(&parent).unwrap();
