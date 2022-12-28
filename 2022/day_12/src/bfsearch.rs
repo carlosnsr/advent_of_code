@@ -1,13 +1,13 @@
 use crate::{
     common::get_neighbours,
-    grid::{Grid, Node},
+    grid::{Cell, Grid, Node},
     point::{Point, Points},
 };
 use std::collections::VecDeque;
 
 pub fn bfsearch(grid: &mut Grid<Node>) -> Option<Points> {
-    let start = grid.find('S').unwrap();
-    let end = grid.find('E').unwrap();
+    let start = grid.find(Cell::Start).unwrap();
+    let end = grid.find(Cell::End).unwrap();
 
     let mut root = grid.get_mut(&start).unwrap();
     let mut queue: VecDeque<Point> = VecDeque::new();

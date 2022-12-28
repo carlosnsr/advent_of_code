@@ -1,14 +1,14 @@
 use crate::{
     common::get_neighbours,
-    grid::{Grid, Node},
+    grid::{Cell, Grid, Node},
     point::{Point, Points},
 };
 use std::collections::{HashMap, HashSet, BinaryHeap};
 use std::cmp::Reverse;
 
 pub fn find_shortest_path(grid: &Grid<Node>) -> Option<Points> {
-    let start = grid.find('S').unwrap();
-    let end = grid.find('E').unwrap();
+    let start = grid.find(Cell::Start).unwrap();
+    let end = grid.find(Cell::End).unwrap();
 
     shortest_path(&grid, &start, &end)
 }
@@ -17,7 +17,7 @@ type DNode = (usize, Option<Point>);
 type QNode = (usize, Point);
 
 fn shortest_path(grid: &Grid<Node>, start: &Point, target: &Point) -> Option<Points> {
-    let grid_size = grid.len_x() * grid.len_y();
+    let grid_size = grid.height() * grid.width();
     let mut distances: HashMap<Point, DNode> = HashMap::with_capacity(grid_size);
     let mut queue: BinaryHeap<Reverse<QNode>> = BinaryHeap::new();
 

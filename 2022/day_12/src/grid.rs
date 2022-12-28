@@ -1,23 +1,39 @@
 use crate::point::Point;
-use crate::common::Height;
 
 pub trait Newable {
-    fn new(value: Height) -> Self;
+    fn new(value: Cell) -> Self;
 }
 
 pub trait Valuable {
-    fn value(&self) -> &Height;
+    fn value(&self) -> &Cell;
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Cell {
+    Start,
+    End,
+    Area(u8),
+}
+
+impl Cell {
+    pub fn height(&self) -> u8 {
+        match self {
+            Cell::Start => 0,
+            Cell::End => 25, // i.e. b'z' - b'a'
+            Cell::Area(h) => *h,
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct Node {
-    pub value: Height,
+    pub value: Cell,
     pub visited: bool,
     pub parent: Option<Point>,
 }
 
 impl Newable for Node {
-    fn new(value: Height) -> Self {
+    fn new(value: Cell) -> Self {
         Self {
             value,
             visited: false,
@@ -27,7 +43,7 @@ impl Newable for Node {
 }
 
 impl Valuable for Node {
-    fn value(&self) -> &Height {
+    fn value(&self) -> &Cell {
         &self.value
     }
 }
@@ -35,21 +51,34 @@ impl Valuable for Node {
 #[derive(Debug)]
 pub struct Grid<T> {
     grid: Vec<Vec<T>>,
+    height: usize,
+    width: usize,
 }
 
 impl<T> Grid<T> where T: Newable + Valuable {
     pub fn new() -> Self {
-        Self { grid: Vec::new() }
+        Self { grid: Vec::new(), width: 0, height: 0 }
     }
 
     pub fn push(&mut self, line: &String) {
-        let row: Vec<T> = line.chars().map(|c| T::new(c)).collect();
+        let row: Vec<T> = line
+            .chars()
+            .map(|c| match c {
+                'S' => Cell::Start,
+                'E' => Cell::End,
+                'a'..='z' => Cell::Area(c as u8 - b'a'),
+                _ => panic!("Invalid character *{}*", c),
+            })
+            .map(|cell| T::new(cell))
+            .collect();
+        self.width = row.len();
+        self.height += 1;
         self.grid.push(row);
     }
 
-    pub fn find(&self, value: Height) -> Option<Point> {
-        for y in 0..self.len_y() {
-            for x in 0..self.len_x() {
+    pub fn find(&self, value: Cell) -> Option<Point> {
+        for y in 0..self.height {
+            for x in 0..self.width {
                 if *self.grid[y][x].value() == value {
                     return Some(Point::new(x, y));
                 }
@@ -68,11 +97,15 @@ impl<T> Grid<T> where T: Newable + Valuable {
         Some(&self.grid[y][x])
     }
 
-    pub fn len_x(&self) -> usize {
-        self.grid[0].len()
+    pub fn in_bounds(&self, point: &Point) -> bool {
+        point.x < self.width && point.y < self.height
     }
 
-    pub fn len_y(&self) -> usize {
-        self.grid.len()
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    pub fn width(&self) -> usize {
+        self.width
     }
 }

@@ -1,15 +1,13 @@
 use crate::{
     common::get_neighbours,
-    grid::{Grid, Node},
+    grid::{Cell, Grid, Node},
     point::{Point, Points},
 };
 use std::collections::HashSet;
 
 pub fn climb_to_top(grid: &Grid<Node>) -> Option<Points> {
-    let start = grid.find('S').unwrap();
-    println!("Start position is: {:?}", &start);
-    let end = grid.find('E').unwrap();
-    println!("End position is: {:?}", &end);
+    let start = grid.find(Cell::Start).unwrap();
+    let end = grid.find(Cell::End).unwrap();
     let mut visited: HashSet<Point> = HashSet::new();
 
     match hill_climb(&grid, &start, &end, &mut visited) {
