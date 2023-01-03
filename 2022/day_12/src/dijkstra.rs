@@ -1,9 +1,8 @@
 use crate::{
-    common::get_neighbours,
     grid::{Cell, Grid, Node},
     point::{Point, Points},
 };
-use std::collections::{HashMap, HashSet, BinaryHeap};
+use std::collections::{HashMap, BinaryHeap};
 use std::cmp::Reverse;
 
 pub fn find_shortest_path(grid: &Grid<Node>) -> Option<Points> {
@@ -23,13 +22,13 @@ fn shortest_path(grid: &Grid<Node>, start: &Point, target: &Point) -> Option<Poi
 
     // add start and its neighbours, queue up its neighbours
     distances.insert(start.clone(), (0, None));
-    for neighbour in get_neighbours(&grid, &start) {
+    for neighbour in grid.get_walkable_neighbours(&start) {
         distances.insert(neighbour.clone(), (1, Some(start.clone())));
         queue.push(Reverse((1, neighbour.clone())));
     }
 
     while let Some(Reverse((distance, popped))) = queue.pop() {
-        for neighbour in get_neighbours(&grid, &popped) {
+        for neighbour in grid.get_walkable_neighbours(&popped) {
             let new_distance = distance + 1;
             match distances.get(&neighbour) {
                 // if we've never been here before, add it and queue it

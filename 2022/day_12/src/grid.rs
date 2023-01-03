@@ -1,4 +1,4 @@
-use crate::point::Point;
+use crate::point::{Point, Points};
 
 pub trait Newable {
     fn new(value: Cell) -> Self;
@@ -95,6 +95,25 @@ impl<T> Grid<T> where T: Newable + Valuable {
     pub fn get(&self, target: &Point) -> Option<&T> {
         let (x, y) = (target.x, target.y);
         Some(&self.grid[y][x])
+    }
+
+    pub fn get_walkable_neighbours(&self, target: &Point) -> Points {
+        let target_height = self.get(target).unwrap().value().height();
+        let deltas: [(isize, isize); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+        deltas
+            .into_iter()
+            .filter_map(move |(dx, dy)|
+                Some(Point {
+                    x: target.x.checked_add_signed(dx)?,
+                    y: target.y.checked_add_signed(dy)?,
+                })
+            )
+            .filter(|point| self.in_bounds(&point))
+            .filter(|point| {
+                let height = self.get(&point).unwrap().value().height();
+                height <= target_height + 1
+            })
+        .collect()
     }
 
     pub fn in_bounds(&self, point: &Point) -> bool {

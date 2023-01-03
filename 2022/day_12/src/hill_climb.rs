@@ -1,5 +1,4 @@
 use crate::{
-    common::get_neighbours,
     grid::{Cell, Grid, Node},
     point::{Point, Points},
 };
@@ -26,7 +25,7 @@ fn hill_climb(grid: &Grid<Node>, current: &Point, end: &Point, visited: &mut Has
     if current == end {
         return Some(vec![]);
     } else {
-        let neighbours = get_neighbours(grid, current);
+        let neighbours = grid.get_walkable_neighbours(current);
         let neighbours_by_distance = get_neighbours_by_distance(neighbours, &end);
         for i in 0..neighbours_by_distance.len() {
             let (_, neighbour) = &neighbours_by_distance[i];

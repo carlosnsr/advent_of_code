@@ -1,5 +1,4 @@
 use crate::{
-    common::get_neighbours,
     grid::{Cell, Grid, Node},
     point::{Point, Points},
 };
@@ -27,7 +26,7 @@ pub fn bfsearch(grid: &mut Grid<Node>) -> Option<Points> {
                 return Some(path);
             }
 
-            let mut neighbours = get_neighbours(&grid, &current);
+            let mut neighbours = grid.get_walkable_neighbours(&current);
             for neighbour in neighbours.drain(0..) {
                 if let Some(node) = grid.get_mut(&neighbour) {
                     if node.visited {
@@ -121,7 +120,7 @@ mod bfs_tests {
                 Point::new(0, 1),
                 Point::new(1, 1),
                 Point::new(2, 1),
-                ]));
+            ]));
     }
 
     #[test]
@@ -166,7 +165,7 @@ mod bfs_tests {
             Point::new(4, 1),
             Point::new(4, 2),
             Point::new(5, 2),
-            ]);
+        ]);
         let mut grid = make_grid(&example_input());
         let path = bfsearch(&mut grid);
         print("Path", &path);
