@@ -12,8 +12,8 @@ pub fn find_shortest_path(grid: &Grid<Node>) -> Option<Points> {
     shortest_path(&grid, &start, &end)
 }
 
-type DNode = (usize, Option<Point>);
-type QNode = (usize, Point);
+type DNode = (usize, Option<Point>);  // (distance, how we got here)
+type QNode = (usize, Point); // (current total distance, the node to process)
 
 fn shortest_path(grid: &Grid<Node>, start: &Point, target: &Point) -> Option<Points> {
     let grid_size = grid.height() * grid.width();
@@ -27,9 +27,12 @@ fn shortest_path(grid: &Grid<Node>, start: &Point, target: &Point) -> Option<Poi
         queue.push(Reverse((1, neighbour.clone())));
     }
 
+    // for the cheapest node thus far
     while let Some(Reverse((distance, popped))) = queue.pop() {
+        // get all it's neighbours
         for neighbour in grid.get_walkable_neighbours(&popped) {
             let new_distance = distance + 1;
+            // check the distances to each neighbour
             match distances.get(&neighbour) {
                 // if we've never been here before, add it and queue it
                 None => {
@@ -37,8 +40,8 @@ fn shortest_path(grid: &Grid<Node>, start: &Point, target: &Point) -> Option<Poi
                     queue.push(Reverse((new_distance, neighbour.clone())));
                 }
                 // if we already found a smaller distance, do nothing
-                Some((best_distance, _)) if new_distance >= *best_distance => {},
-                // we have found a shorter distance, save it and queue it
+                Some((distance, _)) if new_distance >= *distance => {},
+                // we have found a shorter distance to this neighbour, save it and queue it
                 Some(_) => {
                     *(distances.get_mut(&neighbour).unwrap()) = (new_distance, Some(popped.clone()));
                     queue.push(Reverse((new_distance, neighbour.clone())));
