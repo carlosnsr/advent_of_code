@@ -6,19 +6,30 @@ import (
 )
 
 func main() {
-  re, err := regexp.Compile(`mul\((\d{1,3}),(\d{1,3})\)`)
+  re, err := regexp.Compile(`do\(\)|don't\(\)|mul\((\d{1,3}),(\d{1,3})\)`)
   check(err)
 
   scanner := open_file("./input")
   sum := 0
+  enabled := true
   for scanner.Scan() {
     line := scanner.Text()
-    muls := re.FindAllStringSubmatch(line, -1)
-    for _, mul := range muls {
-      a := to_i(mul[1])
-      b := to_i(mul[2])
-      sum += a * b
+    ops := re.FindAllStringSubmatch(line, -1)
+    for _, op := range ops {
+      if op[0] == "do()" {
+        enabled = true
+      } else if op[0] == "don't()" {
+        enabled = false
+      } else if enabled {
+        if len(op) != 3 {
+          msg := fmt.Sprintf("Invalid operation: %v", op)
+          panic(msg)
+        }
+        a := to_i(op[1])
+        b := to_i(op[2])
+        sum += a * b
+      }
     }
   }
-  fmt.Println("Problem 1: Sum:", sum)
+  fmt.Println("Problem 2: Sum:", sum)
 }
