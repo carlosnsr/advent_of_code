@@ -55,9 +55,7 @@ func main() {
     // brute_forcing it
     is_saved := false
     for i := 0; i < len(levels); i++ {
-      snubbed := make([]int, 0)
-      snubbed = append(snubbed, levels[:i]...)
-      snubbed = append(snubbed, levels[i + 1:]...)
+      snubbed := clone_rm_i(levels, i)
 
       deltas = make_deltas(snubbed)
       passed, index = check_deltas(deltas)

@@ -4,6 +4,8 @@ import (
   "strconv"
 )
 
+// ============================== ERRORS ==============================
+
 // method to help with error-checking
 func check(e error) {
   if e != nil {
@@ -38,4 +40,12 @@ func Map[T, V any](ts []T, f func(T) V) []V {
     vs[i] = f(t)
   }
   return vs
+}
+
+// creates a new array (with its own memory) but missing the ith element
+func clone_rm_i(arr []int, i int) []int {
+  a := make([]int, 0)
+  a = append(a, arr[:i]...)
+  a = append(a, arr[i + 1:]...)
+  return a
 }
