@@ -11,8 +11,20 @@ import (
 func main() {
   h1, h2 := load_input("./input")
 
+  distance := 0
+  for h1.Len() > 0 && h2.Len() > 0 {
+    left := heap.Pop(h1).(int)
+    right := heap.Pop(h2).(int)
 
-  fmt.Println("hello")
+    abs := right - left
+    if abs < 0 {
+      abs = -abs
+    }
+
+    distance += abs
+  }
+
+  fmt.Println("Part 1:", distance)
 }
 
 // read in file
