@@ -15,13 +15,7 @@ func main() {
   for h1.Len() > 0 && h2.Len() > 0 {
     left := heap.Pop(h1).(int)
     right := heap.Pop(h2).(int)
-
-    abs := right - left
-    if abs < 0 {
-      abs = -abs
-    }
-
-    distance += abs
+    distance += abs(right - left)
   }
 
   fmt.Println("Part 1:", distance)
@@ -44,15 +38,6 @@ func main() {
   }
 
   fmt.Println("Part 2:", similarity)
-}
-
-// read in file
-
-// method to help with error-checking
-func check(e error) {
-  if e != nil {
-    panic(e)
-  }
 }
 
 // returns a scanner for the given file
