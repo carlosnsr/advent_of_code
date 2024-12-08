@@ -8,7 +8,10 @@ import (
 )
 
 func main() {
-  read_input("./input")
+  scanner := make_input_scanner("./input")
+  for scanner.Scan() {
+    fmt.Println(scanner.Text())
+  }
 }
 
 // read in file
@@ -20,13 +23,11 @@ func check(e error) {
   }
 }
 
-func read_input(filename string) { // []string {
+func make_input_scanner(filename string) *bufio.Scanner {
   f, err := os.Open(filename)
   check(err)
 
   scanner := bufio.NewScanner(f)
-  for scanner.Scan() {
-    fmt.Println(scanner.Text())
-  }
-
+  scanner.Split(bufio.ScanWords)
+  return scanner
 }
