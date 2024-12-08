@@ -14,7 +14,7 @@ func main() {
   scanner := bufio.NewScanner(f)
 
   safe_lines := 0
-  // dampened_lines := 0
+  dampened_lines := 0
   // each line, check the levels
   for scanner.Scan() {
     line := scanner.Text()
@@ -28,22 +28,27 @@ func main() {
     // entire line must be increasing or decreasing
     // the change per level must be 1-3
     // count how many lines meet the above criteria
-    is_safe := true
+    issues := 0
     par := parity(deltas[0])
     for i := 0; i < len(deltas); i++ {
       delta := deltas[i]
       if delta == 0 || abs(delta) > 3 || parity(delta) != par {
-        is_safe = false
-        break
+        issues += 1
       }
     }
 
-    if is_safe {
+    if issues == 0 {
       safe_lines += 1
+      continue
+    }
+
+    if issues == 1 {
+      dampened_lines += 1
     }
   }
 
   fmt.Println("Problem 1: Safe lines:", safe_lines)
+  fmt.Println("Problem 2: Safe lines:", safe_lines + dampened_lines)
 }
 
 func parity(i int) int {
