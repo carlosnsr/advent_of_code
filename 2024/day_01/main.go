@@ -25,6 +25,39 @@ func main() {
   }
 
   fmt.Println("Part 1:", distance)
+
+  // lood up the input again
+  h1, h2 = load_input("./input")
+
+  similarity := 0
+
+  left := heap.Pop(h1).(int)
+  right := heap.Pop(h2).(int)
+  for true {
+    for left < right && h1.Len() > 0 {
+      left = heap.Pop(h1).(int)
+    }
+
+    for left > right && h2.Len() > 0 {
+      right = heap.Pop(h2).(int)
+    }
+
+    if left == right {
+      count := 1
+      for left == right && h2.Len() > 0 {
+        count += 1
+        right = h1.Pop().(int)
+      }
+      similarity += count * left
+    }
+
+    if h1.Len() == 0 && h2.Len() == 0 {
+      break
+    }
+    left = heap.Pop(h1).(int)
+  }
+
+  fmt.Println("Part 2:", similarity)
 }
 
 // read in file
