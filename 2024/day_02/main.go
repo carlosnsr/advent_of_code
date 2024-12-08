@@ -20,35 +20,78 @@ func main() {
     line := scanner.Text()
     levels := Map(strings.Split(line, " "), to_i)
 
-    deltas := make([]int, len(levels) - 1)
-    for i := 1; i < len(levels); i++ {
-      deltas[i - 1] = levels[i] - levels[i - 1]
-    }
-
-    // entire line must be increasing or decreasing
-    // the change per level must be 1-3
-    // count how many lines meet the above criteria
-    issues := 0
-    par := parity(deltas[0])
-    for i := 0; i < len(deltas); i++ {
-      delta := deltas[i]
-      if delta == 0 || abs(delta) > 3 || parity(delta) != par {
-        issues += 1
-      }
-    }
-
-    if issues == 0 {
+    deltas := make_deltas(levels)
+    passed, index := check_deltas(deltas)
+    if passed {
       safe_lines += 1
       continue
     }
 
-    if issues == 1 {
+    // if the parity changes, drop the item before
+    // e.g.          1 3  2 4 5
+    // gives deltas:   2 -1 2 1
+    // dropping the 3, we get: 1 2 4 5
+    // which gives deltas:       1 2 1
+    // which is okay
+
+    // if the delta == 0, remove that item
+    // e.g.         1 3 3 4 5
+    // gives deltas:  2 0 1 1
+    // dropping the 3, we get: 1 3 4 5
+    // which gives deltas:       2 1 1
+    // which is okay
+
+    // if the delta > 3, remove that item
+    // e.g.         1 3 7 8 9
+    // gives deltas:  2 4 1 1
+    // dropping the 7, we get: 1 3 8 9
+    // which gives deltas:       2 5 1
+    // which is unsalvageable
+
+    fmt.Println("Old levels:", levels)
+    fmt.Println("Old deltas:", deltas)
+    fmt.Println("Index:", index)
+    // remove from levels the causing the problem
+    index += 1 // because deltas skips the first level
+    levels = append(levels[:index], levels[index + 1:]...)
+    // re-run the deltas check on these new levels
+    deltas = make_deltas(levels)
+    fmt.Println("New levels:", levels)
+    fmt.Println("New deltas:", deltas)
+    passed, index = check_deltas(deltas)
+    if passed {
       dampened_lines += 1
+      fmt.Println("Conclusion: Safe")
+    } else {
+      fmt.Println("Conclusion: UnSafe")
     }
+    fmt.Println("--------------------")
   }
 
   fmt.Println("Problem 1: Safe lines:", safe_lines)
   fmt.Println("Problem 2: Safe lines:", safe_lines + dampened_lines)
+}
+
+func make_deltas(levels []int) []int {
+  deltas := make([]int, len(levels) - 1)
+  for i := 1; i < len(levels); i++ {
+    deltas[i - 1] = levels[i] - levels[i - 1]
+  }
+  return deltas
+}
+
+func check_deltas(deltas []int) (bool, int) {
+  // entire line must be increasing or decreasing
+  // the change per level must be 1-3
+  // count how many lines meet the above criteria
+  par := parity(deltas[0])
+  for i := 0; i < len(deltas); i++ {
+    delta := deltas[i]
+    if delta == 0 || abs(delta) > 3 || parity(delta) != par {
+      return false, i
+    }
+  }
+  return true, -1
 }
 
 func parity(i int) int {
