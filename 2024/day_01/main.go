@@ -11,18 +11,8 @@ import (
 func main() {
   h1, h2 := load_input("./input")
 
-  // strip the heaps
-  strip := func(h *MinHeap) {
-    first := heap.Pop(h)
-    last := first
-    for h.Len() > 0 {
-      last = heap.Pop(h)
-    }
-    fmt.Println("Stripped", first, last)
-  }
 
-  strip(h1)
-  strip(h2)
+  fmt.Println("hello")
 }
 
 // read in file
@@ -73,4 +63,15 @@ func load_input(filename string) (h1, h2 *MinHeap) {
   }
 
   return h1, h2
+}
+
+// stripmines the passed in heap, and returns it's min and max values
+// at the end, the heap will be empty
+func strip(h *MinHeap) (min, max int) {
+  min = heap.Pop(h).(int)
+  max = min
+  for h.Len() > 0 {
+    max = heap.Pop(h).(int)
+  }
+  return min, max
 }
