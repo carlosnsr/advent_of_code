@@ -1,6 +1,8 @@
 package main
 
 import (
+  "bufio"
+  "os"
   "strconv"
 )
 
@@ -19,6 +21,17 @@ func to_i(s string) int {
   i, err := strconv.Atoi(s)
   check(err)
   return i
+}
+
+// ============================== FILE ==============================
+
+// opens a file, passes it to a scanner, and returns the scanner
+func open_file(filename string) *bufio.Scanner {
+  // read in the file
+  f, err := os.Open("./input")
+  check(err)
+  scanner := bufio.NewScanner(f)
+  return scanner
 }
 
 // ============================== MATH ==============================
