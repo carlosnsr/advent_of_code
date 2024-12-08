@@ -8,30 +8,8 @@ import (
   "strconv"
 )
 
-type Node struct {
-  h *MinHeap
-  label string
-  next *Node
-}
-
 func main() {
-  // set up heaps and linked list
-  h1 := &MinHeap{}
-  h2 := &MinHeap{}
-  // create 2-element looped linked list
-  head := &Node{h1, "left", nil}
-  head.next = &Node{h2, "right", head}
-  curr := head
-
-  // load input into each heap
-  scanner := make_input_scanner("./input")
-  for scanner.Scan() {
-    i, err := strconv.Atoi(scanner.Text())
-    check(err)
-
-    heap.Push(curr.h, i)
-    curr = curr.next
-  }
+  h1, h2 := load_input("./input")
 
   // strip the heaps
   strip := func(h *MinHeap) {
@@ -65,4 +43,34 @@ func make_input_scanner(filename string) *bufio.Scanner {
   scanner := bufio.NewScanner(f)
   scanner.Split(bufio.ScanWords)
   return scanner
+}
+
+// struct for the below function's linked-list
+type Node struct {
+  h *MinHeap
+  next *Node
+}
+
+// given two heaps, reads the input into those heaps
+func load_input(filename string) (h1, h2 *MinHeap) {
+  // set up heaps for storing the read-in input
+  h1 = &MinHeap{}
+  h2 = &MinHeap{}
+
+  // set up my cyclic linked list loop
+  head := &Node{h1, nil}
+  head.next = &Node{h2, head}
+  curr := head
+
+  // load input into each heap
+  scanner := make_input_scanner(filename)
+  for scanner.Scan() {
+    i, err := strconv.Atoi(scanner.Text())
+    check(err)
+
+    heap.Push(curr.h, i)
+    curr = curr.next
+  }
+
+  return h1, h2
 }
