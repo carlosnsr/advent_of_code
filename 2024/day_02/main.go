@@ -51,18 +51,26 @@ func main() {
     fmt.Println("Old levels:", levels)
     fmt.Println("Old deltas:", deltas)
     fmt.Println("Index:", index)
-    // remove from levels the causing the problem
-    index += 1 // because deltas skips the first level
-    levels = append(levels[:index], levels[index + 1:]...)
-    // re-run the deltas check on these new levels
-    deltas = make_deltas(levels)
-    fmt.Println("New levels:", levels)
-    fmt.Println("New deltas:", deltas)
-    passed, index = check_deltas(deltas)
-    if passed {
-      dampened_lines += 1
-      fmt.Println("Conclusion: Safe")
-    } else {
+
+    // brute_forcing it
+    is_saved := false
+    for i := 0; i < len(levels); i++ {
+      snubbed := make([]int, 0)
+      snubbed = append(snubbed, levels[:i]...)
+      snubbed = append(snubbed, levels[i + 1:]...)
+
+      deltas = make_deltas(snubbed)
+      passed, index = check_deltas(deltas)
+      if passed {
+        dampened_lines += 1
+        fmt.Println("New levels:", snubbed)
+        fmt.Println("New deltas:", deltas)
+        fmt.Println("Conclusion: Safe")
+        is_saved = true
+        break;
+      }
+    }
+    if !is_saved {
       fmt.Println("Conclusion: UnSafe")
     }
     fmt.Println("--------------------")
