@@ -2,6 +2,7 @@ package main
 
 import (
   // "container/heap"
+  "bufio"
   "fmt"
   "os"
 )
@@ -20,7 +21,12 @@ func check(e error) {
 }
 
 func read_input(filename string) { // []string {
-  data, err := os.ReadFile(filename)
+  f, err := os.Open(filename)
   check(err)
-  fmt.Println(string(data))
+
+  scanner := bufio.NewScanner(f)
+  for scanner.Scan() {
+    fmt.Println(scanner.Text())
+  }
+
 }
