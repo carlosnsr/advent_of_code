@@ -29,32 +29,18 @@ func main() {
   // lood up the input again
   h1, h2 = load_input("./input")
 
+  // count the number of times each number appears in the 2nd heap
+  counts := make(map[int]int)
+  for h2.Len() > 0 {
+    i := heap.Pop(h2).(int)
+    counts[i] += 1
+  }
+
+  // calculate the similarity score by how many times EACH number in the first heap appears
   similarity := 0
-
-  left := heap.Pop(h1).(int)
-  right := heap.Pop(h2).(int)
-  for true {
-    for left < right && h1.Len() > 0 {
-      left = heap.Pop(h1).(int)
-    }
-
-    for left > right && h2.Len() > 0 {
-      right = heap.Pop(h2).(int)
-    }
-
-    if left == right {
-      count := 1
-      for left == right && h2.Len() > 0 {
-        count += 1
-        right = h1.Pop().(int)
-      }
-      similarity += count * left
-    }
-
-    if h1.Len() == 0 && h2.Len() == 0 {
-      break
-    }
-    left = heap.Pop(h1).(int)
+  for h1.Len() > 0 {
+    i := heap.Pop(h1).(int)
+    similarity += i * counts[i]
   }
 
   fmt.Println("Part 2:", similarity)
