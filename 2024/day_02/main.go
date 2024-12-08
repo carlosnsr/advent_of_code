@@ -21,57 +21,23 @@ func main() {
     levels := Map(strings.Split(line, " "), to_i)
 
     deltas := make_deltas(levels)
-    passed, index := check_deltas(deltas)
+    passed, _ := check_deltas(deltas)
     if passed {
       safe_lines += 1
       continue
     }
 
-    // if the parity changes, drop the item before
-    // e.g.          1 3  2 4 5
-    // gives deltas:   2 -1 2 1
-    // dropping the 3, we get: 1 2 4 5
-    // which gives deltas:       1 2 1
-    // which is okay
-
-    // if the delta == 0, remove that item
-    // e.g.         1 3 3 4 5
-    // gives deltas:  2 0 1 1
-    // dropping the 3, we get: 1 3 4 5
-    // which gives deltas:       2 1 1
-    // which is okay
-
-    // if the delta > 3, remove that item
-    // e.g.         1 3 7 8 9
-    // gives deltas:  2 4 1 1
-    // dropping the 7, we get: 1 3 8 9
-    // which gives deltas:       2 5 1
-    // which is unsalvageable
-
-    fmt.Println("Old levels:", levels)
-    fmt.Println("Old deltas:", deltas)
-    fmt.Println("Index:", index)
-
     // brute_forcing it
-    is_saved := false
     for i := 0; i < len(levels); i++ {
       snubbed := clone_rm_i(levels, i)
 
       deltas = make_deltas(snubbed)
-      passed, index = check_deltas(deltas)
+      passed, _ = check_deltas(deltas)
       if passed {
         dampened_lines += 1
-        fmt.Println("New levels:", snubbed)
-        fmt.Println("New deltas:", deltas)
-        fmt.Println("Conclusion: Safe")
-        is_saved = true
         break;
       }
     }
-    if !is_saved {
-      fmt.Println("Conclusion: UnSafe")
-    }
-    fmt.Println("--------------------")
   }
 
   fmt.Println("Problem 1: Safe lines:", safe_lines)
