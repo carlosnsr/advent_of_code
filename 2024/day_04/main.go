@@ -9,8 +9,8 @@ func main() {
   rev := reverse(word)
   word_len := len(word)
 
-  space := SearchSpace{data: make([]*string, len(word)), length: 0}
   count := 0
+  space := SearchSpace{data: make([]*string, len(word)), length: 0}
   scanner := open_file("./example.input")
   for scanner.Scan() {
     space.Push(scanner.Text())
@@ -30,11 +30,11 @@ func main() {
         default:
           continue
       }
-      fmt.Println("Found:", string((*comp)[0]))
+      fmt.Println("Found:", string((*comp)[0]), count)
 
       // check the horizontal
-      count += 1
       if i < bound {
+        count += 1
         for j := 1; j < word_len; j++ {
           if line[i + j] != (*comp)[j] {
             count -= 1
@@ -56,7 +56,19 @@ func main() {
         }
       }
 
-      // check the south-east diagonal
+      // check the north-east diagonal
+      if i < bound {
+        count += 1
+        for j := 1; j < word_len; j++ {
+          y := word_len - 1 - j
+          x := i + j
+          if (*(space.data)[y])[x] != (*comp)[j] {
+            count -= 1
+            break
+          }
+        }
+      }
+
       // check the north-west diagonal
     }
   }
