@@ -28,7 +28,7 @@ func to_i(s string) int {
 // opens a file, passes it to a scanner, and returns the scanner
 func open_file(filename string) *bufio.Scanner {
   // read in the file
-  f, err := os.Open("./input")
+  f, err := os.Open(filename)
   check(err)
   scanner := bufio.NewScanner(f)
   return scanner
