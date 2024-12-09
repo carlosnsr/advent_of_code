@@ -16,10 +16,11 @@ func main() {
     space.Push(scanner.Text())
 
     line := *(space.Last())
-    fmt.Println(line)
     bound := len(line) - len(word) + 1
+    fmt.Println(line)
+
     var comp *string
-    for i := 0; i < bound; i++ {
+    for i := 0; i < len(line); i++ {
       // check for triggers
       switch line[i] {
         case word[0]:
@@ -33,18 +34,30 @@ func main() {
 
       // check the horizontal
       count += 1
-      for j := 1; j < word_len; j++ {
-        fmt.Println("Comparing:", string(line[i + j]), string((*comp)[j]))
-        if line[i + j] != (*comp)[j] {
+      if i < bound {
+        for j := 1; j < word_len; j++ {
+          if line[i + j] != (*comp)[j] {
+            count -= 1
+            break
+          }
+        }
+      }
+
+      if space.length < len(word) {
+        continue
+      }
+
+      // check the vertical
+      count += 1
+      for j := word_len - 1; j >= 0; j-- {
+        if (*(space.data)[j])[i] != (*comp)[j] {
           count -= 1
           break
         }
       }
-      if space.length < len(word) {
-        continue
-      }
-      // check for verticals & diagonals
+
       // check the south-east diagonal
+      // check the north-west diagonal
     }
   }
 
