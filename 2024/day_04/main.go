@@ -70,6 +70,17 @@ func main() {
       }
 
       // check the north-west diagonal
+      if i >= word_len - 1 {
+        count += 1
+        for j := 1; j < word_len; j++ {
+          y := word_len - 1 - j
+          x := i - j
+          if (*(space.data)[y])[x] != (*comp)[j] {
+            count -= 1
+            break
+          }
+        }
+      }
     }
   }
 
