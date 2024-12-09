@@ -6,18 +6,17 @@ import (
 
 func main() {
   word := "XMAS"
-  rev := reverse(word)
   word_len := len(word)
+  rev := reverse(word)
 
   count := 0
   space := SearchSpace{data: make([]*string, len(word)), length: 0}
-  scanner := open_file("./example.input")
+  scanner := open_file("./input")
   for scanner.Scan() {
     space.Push(scanner.Text())
 
     line := *(space.Last())
     bound := len(line) - len(word) + 1
-    fmt.Println(line)
 
     var comp *string
     for i := 0; i < len(line); i++ {
@@ -30,8 +29,8 @@ func main() {
         default:
           continue
       }
-      fmt.Println("Found:", string((*comp)[0]), count)
 
+      // fmt.Println("Found:", string(line[i]), "at", i)
       // check the horizontal
       if i < bound {
         count += 1
@@ -44,13 +43,16 @@ func main() {
       }
 
       if space.length < len(word) {
+        // fmt.Println("   Skipping: space.length < len(word)")
         continue
       }
 
       // check the vertical
       count += 1
-      for j := word_len - 1; j >= 0; j-- {
-        if (*(space.data)[j])[i] != (*comp)[j] {
+      for j := 1; j < word_len; j++ {
+        y := word_len - 1 - j
+        x := i
+        if (*(space.data)[y])[x] != (*comp)[j] {
           count -= 1
           break
         }
@@ -84,7 +86,7 @@ func main() {
     }
   }
 
-  fmt.Println("\nSolution 1:", count)
+  fmt.Println("Solution 1:", count)
 }
 
 func reverse(s string) (result string) {

@@ -27,4 +27,3 @@ func (s *SearchSpace) Push(str string) {
 func (s SearchSpace) Last() *string {
   return s.data[s.length - 1]
 }
-
