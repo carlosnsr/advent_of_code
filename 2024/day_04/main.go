@@ -4,14 +4,37 @@ import (
   "fmt"
 )
 
+type Point struct {
+  x int
+  y int
+}
+
+type PointMap map[Point]int
+
+// if the point exists, returns true
+// if it doesn't exist, adds it and returns false
+func (p PointMap) exists_or_add(x, y int) bool {
+  point := Point{x, y} // coordinates of the middle letter 'A'
+  if p[point] == 1 {
+    return true
+  } else {
+    p[point] = 1
+    return false
+  }
+}
+
 func main() {
-  word := "XMAS"
+  word := "MAS"
   rev := reverse(word)
 
   count := 0
   space := SearchSpace{grid: make([]*string, len(word)), length: 0}
+  x_map := make(PointMap)
+
+
   scanner := open_file("./input")
   lower_bound := len(word) - 1
+  lines := 0
   for scanner.Scan() {
     space.Push(scanner.Text())
 
@@ -30,27 +53,24 @@ func main() {
           continue
       }
 
-      // fmt.Println("Found:", string(line[i]), "at", i)
-      if i < bound && space.match_right(i, *comp) {
-        count += 1
-      }
-
       if space.length < len(word) {
         continue
       }
 
-      if space.match_up(i, *comp) {
+      if i < bound &&
+        space.match_up_right_diagonal(i, *comp) &&
+        x_map.exists_or_add(i + 1, lines - 1) {
         count += 1
       }
 
-      if i < bound && space.match_up_right_diagonal(i, *comp) {
-        count += 1
-      }
-
-      if i >= lower_bound && space.match_up_left_diagonal(i, *comp) {
+      if i >= lower_bound &&
+        space.match_up_left_diagonal(i, *comp) &&
+        x_map.exists_or_add(i - 1, lines - 1) {
         count += 1
       }
     }
+
+    lines++
   }
 
   fmt.Println("Solution 1:", count)
