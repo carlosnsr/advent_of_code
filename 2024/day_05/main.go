@@ -27,8 +27,9 @@ func main() {
   }
 
   // process the manuals
-  valid := 0
+  var mid int
   var is_valid bool
+  sum := 0
   for scanner.Scan() {
     pages := Map(strings.Split(scanner.Text(), ","), to_i)
 
@@ -40,8 +41,9 @@ func main() {
     }
 
     if is_valid {
-      valid++
+      mid = len(pages) / 2
+      sum += pages[mid]
     }
   }
-  fmt.Println("Solution to Part 1:", valid)
+  fmt.Println("Solution to Part 1:", sum)
 }
