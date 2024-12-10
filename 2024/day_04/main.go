@@ -6,12 +6,12 @@ import (
 
 func main() {
   word := "XMAS"
-  word_len := len(word)
   rev := reverse(word)
 
   count := 0
-  space := SearchSpace{data: make([]*string, len(word)), length: 0}
+  space := SearchSpace{grid: make([]*string, len(word)), length: 0}
   scanner := open_file("./input")
+  lower_bound := len(word) - 1
   for scanner.Scan() {
     space.Push(scanner.Text())
 
@@ -20,7 +20,7 @@ func main() {
 
     var comp *string
     for i := 0; i < len(line); i++ {
-      // check for triggers
+      // check for first letter of word or rev
       switch line[i] {
         case word[0]:
           comp = &word
@@ -31,57 +31,24 @@ func main() {
       }
 
       // fmt.Println("Found:", string(line[i]), "at", i)
-      // check the horizontal
-      if i < bound {
+      if i < bound && space.match_right(i, *comp) {
         count += 1
-        for j := 1; j < word_len; j++ {
-          if line[i + j] != (*comp)[j] {
-            count -= 1
-            break
-          }
-        }
       }
 
       if space.length < len(word) {
-        // fmt.Println("   Skipping: space.length < len(word)")
         continue
       }
 
-      // check the vertical
-      count += 1
-      for j := 1; j < word_len; j++ {
-        y := word_len - 1 - j
-        x := i
-        if (*(space.data)[y])[x] != (*comp)[j] {
-          count -= 1
-          break
-        }
+      if space.match_up(i, *comp) {
+        count += 1
       }
 
-      // check the north-east diagonal
-      if i < bound {
+      if i < bound && space.match_up_right_diagonal(i, *comp) {
         count += 1
-        for j := 1; j < word_len; j++ {
-          y := word_len - 1 - j
-          x := i + j
-          if (*(space.data)[y])[x] != (*comp)[j] {
-            count -= 1
-            break
-          }
-        }
       }
 
-      // check the north-west diagonal
-      if i >= word_len - 1 {
+      if i >= lower_bound && space.match_up_left_diagonal(i, *comp) {
         count += 1
-        for j := 1; j < word_len; j++ {
-          y := word_len - 1 - j
-          x := i - j
-          if (*(space.data)[y])[x] != (*comp)[j] {
-            count -= 1
-            break
-          }
-        }
       }
     }
   }
