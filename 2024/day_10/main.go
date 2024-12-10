@@ -39,24 +39,35 @@ func main() {
       if c == '0' {
         // fmt.Printf("Found a zero at (%d, %d)\n", y, x)
         clear(walked)
-        trails += walk(Point{x, y}, &g, &walked)
+        found := walk(Point{x, y}, &g, &walked)
+        fmt.Printf("At (%d, %d), found %d trails\n", y, x, found)
+        fmt.Println(walked)
+        trails += found
       }
     }
   }
   fmt.Println("Solution to Part 1:", trails)
 }
 
-type WalkedMap map[Point]bool
+type Marker struct {
+  walked bool
+  summitted bool
+}
+
+type WalkedMap map[Point]Marker
 
 func c_at(p Point, g *Grid) byte {
   return g.grid[p.y][p.x]
 }
 
 func walk(p Point, g *Grid, w *WalkedMap) (count int) {
-  (*w)[p] = true // marking that we've been here
+  fmt.Printf("Marking (%d, %d)\n", p.y, p.x)
+  (*w)[p] = Marker{true, false} // marking that we've been here
 
   o := c_at(p, g)
   if o == '9' { // OMG, we found the end!
+    fmt.Printf("Hit the summit!!! (%d, %d)\n", p.y, p.x)
+    // (*w)[p] = Marker{true, true}
     return 1
   }
 
@@ -64,7 +75,13 @@ func walk(p Point, g *Grid, w *WalkedMap) (count int) {
   var c byte
   for _, d := range directions {
     q := p.add(d)
-    if (*w)[q] ||
+    if (*w)[q].summitted { // connecting to a path that has already summitted
+      fmt.Printf("Hit a summitted path at (%d, %d)\n", q.y, q.x)
+      count++
+      continue
+    }
+
+    if (*w)[q].walked ||
       q.y < 0 || q.y >= g.size ||
       q.x < 0 || q.x >= len((g.grid)[0]) {
       continue
@@ -73,7 +90,12 @@ func walk(p Point, g *Grid, w *WalkedMap) (count int) {
     c = c_at(q, g)
     // fmt.Printf("......examining %c (%d, %d)\n", c, q.y, q.x)
     if c - o == 1 { // can only continue if the next cell is one greater
-      count += walk(q, g, w)
+      found := walk(q, g, w)
+      if found > 0 {
+        fmt.Printf("Summitted (%d, %d)\n", q.y, q.x)
+        (*w)[q] = Marker{true, true}
+      }
+      count += found
     }
   }
 
