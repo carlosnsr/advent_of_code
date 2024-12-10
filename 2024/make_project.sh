@@ -11,7 +11,19 @@ cd "day_$day"
 
 go mod init "advent_of_code/2024/day_$day"
 touch README.md
-touch main.go
+
+echo <<EOF > main.go
+package main
+
+import (
+  "fmt"
+)
+
+func main() {
+  fmt.Println("Hello, World!")
+}
+EOF
+
 touch example.input
 mv ~/Downloads/input .
 cp ../day_$old_day/utils.go .
