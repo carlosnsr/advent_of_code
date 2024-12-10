@@ -12,7 +12,7 @@ func main() {
 
   // read in the rules
   rules := make(map[int](map[int]bool))
-  scanner := open_file("./example.input")
+  scanner := open_file("./input")
   for scanner.Scan() {
     parts := re.FindStringSubmatch(scanner.Text())
     if len(parts) == 0 {
