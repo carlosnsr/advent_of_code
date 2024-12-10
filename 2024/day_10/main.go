@@ -4,31 +4,78 @@ import (
   "fmt"
 )
 
+var directions [4]Point // global, oh no!
+
+type Grid struct {
+  grid []string
+  size int
+}
+
 func main() {
   const MAX_SIZE = 60
-  grid := make([]string, MAX_SIZE)
+  g := Grid{grid: make([]string, MAX_SIZE), size: 0}
 
   // read in the grid
-  lines := 0
-  scanner := open_file("./example.input")
+  scanner := open_file("./input")
   for scanner.Scan() {
-    grid[lines] = scanner.Text()
-    lines++
+    g.grid[g.size] = scanner.Text()
+    g.size++
   }
-  fmt.Println(grid)
+
+  // set the allowed directions
+  directions = [4]Point{
+    Point{-1, 0}, // left
+    Point{1, 0}, // right
+    Point{0, -1}, // up
+    Point{0, 1}, // down
+  }
 
   // find each zero, and walk to as many nines as possible
-  for y := 0; y < lines; y++ {
-    row := grid[y]
+  trails := 0
+  walked := make(WalkedMap)
+  for y := 0; y < g.size; y++ {
+    row := g.grid[y]
     for x, c := range row {
       if c == '0' {
-        fmt.Println(row)
-        walk(y, x, grid)
+        // fmt.Printf("Found a zero at (%d, %d)\n", y, x)
+        clear(walked)
+        trails += walk(Point{x, y}, &g, &walked)
       }
     }
   }
+  fmt.Println("Solution to Part 1:", trails)
 }
 
-func walk(y, x int, grid []string) {
-  fmt.Printf("Walking from (%d, %d)\n", y, x)
+type WalkedMap map[Point]bool
+
+func c_at(p Point, g *Grid) byte {
+  return g.grid[p.y][p.x]
+}
+
+func walk(p Point, g *Grid, w *WalkedMap) (count int) {
+  (*w)[p] = true // marking that we've been here
+
+  o := g.grid[p.y][p.x]
+  if o == '9' { // OMG, we found the end!
+    return 1
+  }
+
+  // for each direction, walk if its height is exactly one greater
+  var c byte
+  for _, d := range directions {
+    q := p.add(d)
+    if (*w)[q] ||
+      q.y < 0 || q.y >= g.size ||
+      q.x < 0 || q.x >= len((g.grid)[0]) {
+      continue
+    }
+
+    c = (g.grid)[q.y][q.x]
+    // fmt.Printf("......examining %c (%d, %d)\n", c, q.y, q.x)
+    if c - o == 1 { // can only continue if the next cell is one greater
+      count += walk(q, g, w)
+    }
+  }
+
+  return count
 }
