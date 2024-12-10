@@ -3,6 +3,7 @@ package main
 import (
   "fmt"
   "regexp"
+  "strings"
 )
 
 func main() {
@@ -24,5 +25,29 @@ func main() {
     }
     rules[pre][post] = true
   }
-  fmt.Println(rules)
+
+  // process the manuals
+  valid := 0
+  var is_valid bool
+  for scanner.Scan() {
+    pages := Map(strings.Split(scanner.Text(), ","), to_i)
+
+    is_valid = true
+    for i, page := range pages {
+      for j := i + 1; j < len(pages); j++ {
+        if _, ok := rules[page][pages[j]]; !ok {
+          is_valid = false
+          break
+        }
+      }
+      if !is_valid {
+        break
+      }
+    }
+
+    if is_valid {
+      valid++
+    }
+  }
+  fmt.Println("Solution to Part 1:", valid)
 }
