@@ -2,8 +2,11 @@ package main
 
 import (
   "bufio"
+  "container/list"
+  "fmt"
   "os"
   "strconv"
+  "strings"
 )
 
 // ============================== ERRORS ==============================
@@ -23,6 +26,10 @@ func to_i(s string) int {
   return i
 }
 
+func to_s(i int) string {
+  return strconv.Itoa(i)
+}
+
 // ============================== FILE ==============================
 
 // opens a file, passes it to a scanner, and returns the scanner
@@ -32,6 +39,26 @@ func open_file(filename string) *bufio.Scanner {
   check(err)
   scanner := bufio.NewScanner(f)
   return scanner
+}
+
+// ============================== LISTS ==============================
+
+func list_to_a(l *list.List) []int {
+  a := make([]int, l.Len())
+  for i , e := 0, l.Front(); e != nil; i, e = i + 1, e.Next() {
+    a[i] = e.Value.(int)
+  }
+  return a
+}
+
+func list_to_s(l *list.List) string {
+  var b strings.Builder
+  fmt.Fprintf(&b, "[")
+  for e := l.Front(); e != nil; e = e.Next() {
+    fmt.Fprintf(&b, "%d, ", e.Value.(int))
+  }
+  fmt.Fprintf(&b, "]")
+  return b.String()
 }
 
 // ============================== MATH ==============================
