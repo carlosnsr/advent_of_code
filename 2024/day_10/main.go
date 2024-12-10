@@ -55,7 +55,7 @@ func c_at(p Point, g *Grid) byte {
 func walk(p Point, g *Grid, w *WalkedMap) (count int) {
   (*w)[p] = true // marking that we've been here
 
-  o := g.grid[p.y][p.x]
+  o := c_at(p, g)
   if o == '9' { // OMG, we found the end!
     return 1
   }
@@ -70,7 +70,7 @@ func walk(p Point, g *Grid, w *WalkedMap) (count int) {
       continue
     }
 
-    c = (g.grid)[q.y][q.x]
+    c = c_at(q, g)
     // fmt.Printf("......examining %c (%d, %d)\n", c, q.y, q.x)
     if c - o == 1 { // can only continue if the next cell is one greater
       count += walk(q, g, w)
