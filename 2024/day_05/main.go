@@ -33,15 +33,9 @@ func main() {
     pages := Map(strings.Split(scanner.Text(), ","), to_i)
 
     is_valid = true
-    for i, page := range pages {
-      for j := i + 1; j < len(pages); j++ {
-        if _, ok := rules[page][pages[j]]; !ok {
-          is_valid = false
-          break
-        }
-      }
-      if !is_valid {
-        break
+    for i := 0; is_valid && i < len(pages); i++ {
+      for j := i + 1; is_valid && j < len(pages); j++ {
+        is_valid = rules[pages[i]][pages[j]]
       }
     }
 
