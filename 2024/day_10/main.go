@@ -16,7 +16,7 @@ func main() {
   g := Grid{grid: make([]string, MAX_SIZE), size: 0}
 
   // read in the grid
-  scanner := open_file("./input")
+  scanner := open_file("./example.input")
   for scanner.Scan() {
     g.grid[g.size] = scanner.Text()
     g.size++
@@ -38,7 +38,7 @@ func main() {
     for x, c := range row {
       if c == '0' {
         // fmt.Printf("Found a zero at (%d, %d)\n", y, x)
-        clear(walked)
+        clear(walked) // TODO: each trailhead can now use results from previous trailheads, right?
         found := walk(Point{x, y}, &g, &walked)
         fmt.Printf("At (%d, %d), found %d trails\n", y, x, found)
         fmt.Println(walked)
@@ -61,10 +61,10 @@ func c_at(p Point, g *Grid) byte {
 }
 
 func walk(p Point, g *Grid, w *WalkedMap) (count int) {
-  fmt.Printf("Marking (%d, %d)\n", p.y, p.x)
   (*w)[p] = Marker{true, false} // marking that we've been here
 
   o := c_at(p, g)
+  fmt.Printf("Walking %c (%d, %d)\n", o, p.y, p.x)
   if o == '9' { // OMG, we found the end!
     fmt.Printf("Hit the summit!!! (%d, %d)\n", p.y, p.x)
     // (*w)[p] = Marker{true, true}
