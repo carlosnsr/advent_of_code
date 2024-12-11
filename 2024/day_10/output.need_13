@@ -34,7 +34,7 @@ Summitted (6, 2)
 Summitted (5, 2)
 Summitted (4, 2)
 Summitted (3, 2)
---- WAT?! Expected "Walking 6 (4, 2)
+--- WAT?! Expected "Walking 6 (4, 1)
 -- Then picks up on the RIGHT hand side
 Walking 4 (3, 4)
 Walking 5 (3, 5)

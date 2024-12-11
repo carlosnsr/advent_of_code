@@ -39,14 +39,15 @@ func main() {
       if c == '0' {
         // fmt.Printf("Found a zero at (%d, %d)\n", y, x)
         clear(walked) // TODO: each trailhead can now use results from previous trailheads, right?
-        found := walk(Point{x, y}, &g, &walked)
+        start := Point{x, y}
+        found := walk(start, start, &g, &walked)
         fmt.Printf("At (%d, %d), found %d trails\n", y, x, found)
-        fmt.Println(walked)
+        // fmt.Println(walked)
         trails += found
       }
     }
   }
-  fmt.Println("Solution to Part 1:", trails)
+  fmt.Println("Solution to Part 2:", trails)
 }
 
 type Marker struct {
@@ -60,14 +61,14 @@ func c_at(p Point, g *Grid) byte {
   return g.grid[p.y][p.x]
 }
 
-func walk(p Point, g *Grid, w *WalkedMap) (count int) {
+func walk(old_p, p Point, g *Grid, w *WalkedMap) (count int) {
   (*w)[p] = Marker{true, false} // marking that we've been here
 
   o := c_at(p, g)
   fmt.Printf("Walking %c (%d, %d)\n", o, p.y, p.x)
   if o == '9' { // OMG, we found the end!
     fmt.Printf("Hit the summit!!! (%d, %d)\n", p.y, p.x)
-    // (*w)[p] = Marker{true, true}
+    (*w)[p] = Marker{true, true}
     return 1
   }
 
@@ -75,25 +76,31 @@ func walk(p Point, g *Grid, w *WalkedMap) (count int) {
   var c byte
   for _, d := range directions {
     q := p.add(d)
+    if q == old_p { // don't go back to where we came from
+      // fmt.Printf("(%d, %d): Skipping the way we came (%d, %d)\n", p.y, p.x, q.y, q.x)
+      continue
+    }
+
     if (*w)[q].summitted { // connecting to a path that has already summitted
-      fmt.Printf("Hit a summitted path at (%d, %d)\n", q.y, q.x)
+      fmt.Printf("(%d, %d): Hit a summitted path at (%d, %d)\n", p.y, p.x, q.y, q.x)
       count++
       continue
     }
 
     if (*w)[q].walked ||
       q.y < 0 || q.y >= g.size ||
-      q.x < 0 || q.x >= len((g.grid)[0]) {
+      q.x < 0 || q.x >= len((g.grid)[p.y]) {
+      fmt.Printf("(%d, %d): Skipping (%d, %d)\n", p.y, p.x, q.y, q.x)
       continue
     }
 
     c = c_at(q, g)
     // fmt.Printf("......examining %c (%d, %d)\n", c, q.y, q.x)
     if c - o == 1 { // can only continue if the next cell is one greater
-      found := walk(q, g, w)
+      found := walk(p, q, g, w)
       if found > 0 {
-        fmt.Printf("Summitted (%d, %d)\n", q.y, q.x)
-        (*w)[q] = Marker{true, true}
+        fmt.Printf("(%d, %d): Summitted (%d, %d)\n", p.y, p.x, q.y, q.x)
+        (*w)[p] = Marker{true, true}
       }
       count += found
     }
