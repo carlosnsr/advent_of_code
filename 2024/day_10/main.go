@@ -51,24 +51,40 @@ func main() {
 }
 
 type Marker struct {
-  walked bool
+  walks int
   summitted bool
 }
 
-type WalkedMap map[Point]Marker
+type WalkedMap map[Point]*Marker
 
 func c_at(p Point, g *Grid) byte {
   return g.grid[p.y][p.x]
 }
 
 func walk(old_p, p Point, g *Grid, w *WalkedMap) (count int) {
-  (*w)[p] = Marker{true, false} // marking that we've been here
+  // mark that we've been here
+  var m *Marker
+  if n, ok := (*w)[p]; !ok {
+    fmt.Println("Creating m")
+    m = &Marker{1, false}
+    (*w)[p] = m
+  } else {
+    fmt.Println("Existing m")
+    m = n
+    m.walks += 1
+  }
 
   o := c_at(p, g)
   fmt.Printf("Walking %c (%d, %d)\n", o, p.y, p.x)
+
+  if m == nil {
+    panic("Marker should not be nil at this point")
+  }
+
   if o == '9' { // OMG, we found the end!
     fmt.Printf("Hit the summit!!! (%d, %d)\n", p.y, p.x)
-    (*w)[p] = Marker{true, true}
+    // mark as summitted
+    m.summitted = true
     return 1
   }
 
@@ -81,13 +97,13 @@ func walk(old_p, p Point, g *Grid, w *WalkedMap) (count int) {
       continue
     }
 
-    if (*w)[q].summitted { // connecting to a path that has already summitted
+    if m.summitted { // connecting to a path that has already summitted
       fmt.Printf("(%d, %d): Hit a summitted path at (%d, %d)\n", p.y, p.x, q.y, q.x)
       count++
       continue
     }
 
-    if (*w)[q].walked ||
+    if m.walks > 0 ||
       q.y < 0 || q.y >= g.size ||
       q.x < 0 || q.x >= len((g.grid)[p.y]) {
       fmt.Printf("(%d, %d): Skipping (%d, %d)\n", p.y, p.x, q.y, q.x)
@@ -100,7 +116,7 @@ func walk(old_p, p Point, g *Grid, w *WalkedMap) (count int) {
       found := walk(p, q, g, w)
       if found > 0 {
         fmt.Printf("(%d, %d): Summitted (%d, %d)\n", p.y, p.x, q.y, q.x)
-        (*w)[p] = Marker{true, true}
+        m.summitted = true
       }
       count += found
     }
