@@ -16,7 +16,7 @@ func main() {
   g := Grid{grid: make([]string, MAX_SIZE), size: 0}
 
   // read in the grid
-  scanner := open_file("./example.input")
+  scanner := open_file("./input")
   for scanner.Scan() {
     g.grid[g.size] = scanner.Text()
     g.size++
@@ -97,24 +97,30 @@ func walk(old_p, p Point, g *Grid, w *WalkedMap) (count int) {
       continue
     }
 
-    if m.summitted { // connecting to a path that has already summitted
-      fmt.Printf("(%d, %d): Hit a summitted path at (%d, %d)\n", p.y, p.x, q.y, q.x)
-      count++
-      continue
-    }
-
-    if m.walks > 0 ||
-      q.y < 0 || q.y >= g.size ||
-      q.x < 0 || q.x >= len((g.grid)[p.y]) {
+    // check if out of bounds
+    if q.y < 0 || q.y >= g.size || q.x < 0 || q.x >= len((g.grid)[p.y]) {
       fmt.Printf("(%d, %d): Skipping (%d, %d)\n", p.y, p.x, q.y, q.x)
       continue
     }
 
+    qm := (*w)[q]
+    if qm != nil {
+      if qm.summitted { // connecting to a path that has already summitted
+        fmt.Printf("(%d, %d): Hit a summitted path at (%d, %d)\n", p.y, p.x, q.y, q.x)
+        count++
+        continue
+      }
+
+      if qm.walks > 1 { // we've been here before. An extra visit is allowed to help with backtracking
+        continue
+      }
+    }
+
     c = c_at(q, g)
     // fmt.Printf("......examining %c (%d, %d)\n", c, q.y, q.x)
-    if c - o == 1 { // can only continue if the next cell is one greater
+    if c - o == 1 { // can only continue if the next cell is one greater in height
       found := walk(p, q, g, w)
-      if found > 0 {
+      if found > 0 { //  when walking back, note that we've been summitted
         fmt.Printf("(%d, %d): Summitted (%d, %d)\n", p.y, p.x, q.y, q.x)
         m.summitted = true
       }
